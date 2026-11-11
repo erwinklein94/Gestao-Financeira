@@ -1,0 +1,9 @@
+# arquivos locais de teste / ferramentas
+dev/
+.claude/
+*.log
+.DS_Store
+Thumbs.db
+
+# dados sigilosos (carga inicial com contratos e valores) — nunca publicar
+privado/

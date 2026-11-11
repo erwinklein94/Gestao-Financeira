@@ -1,0 +1,43 @@
+/* =====================================================================
+   IDENTIDADE VISUAL — Tokens de design (paleta institucional)
+   Obs.: nenhum logotipo é usado neste sistema.
+   ===================================================================== */
+:root {
+  /* Paleta institucional (principal) */
+  --marca-azul:          #003865;
+  --marca-azul-claro:    #32A6E6;
+  --marca-verde:         #1E9F7F;
+  --marca-verde-claro:   #7FE06C;
+  --marca-azul-profundo: #002B4D;
+  --marca-azul-noite:    #001E36;
+
+  /* Paleta secundária (uso pontual) */
+  --marca-amarelo:  #FBD300;
+  --marca-laranja:  #F78344;
+  --marca-roxo:     #9F4BB9;
+  --marca-cinza:    #BDCCD4;
+
+  /* Cinzas de interface */
+  --marca-cinza-50:  #F2F5F6;
+  --marca-cinza-100: #E5EBEE;
+  --marca-cinza-200: #D7E0E5;
+  --marca-cinza-300: #CAD6DD;
+  --marca-texto:       #4D626F;
+  --marca-texto-claro: #6F838E;
+
+  /* Tipografia — Cera Pro para quem tem licença; Verdana é o fallback oficial */
+  --marca-fonte: "Cera Pro", Verdana, Geneva, Tahoma, sans-serif;
+
+  /* Estados */
+  --marca-ok:     var(--marca-verde);
+  --marca-alerta: var(--marca-amarelo);
+  --marca-erro:   #D84545;
+
+  /* Forma, sombra e movimento */
+  --marca-raio:     14px;
+  --marca-raio-sm:  10px;
+  --marca-chanfro:  14px;
+  --marca-sombra:       0 4px 18px rgba(0, 56, 101, 0.08);
+  --marca-sombra-hover: 0 10px 30px rgba(0, 56, 101, 0.16);
+  --marca-transicao: 0.18s ease;
+}

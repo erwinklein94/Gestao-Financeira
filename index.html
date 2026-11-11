@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestão Financeira</title>
+  <meta name="description" content="Gestão financeira de contratos — orçamento CAPEX e OPEX, medições, previsões e painéis gerenciais.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#003865">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <script>
+    /* aplica o tema salvo antes da primeira pintura (padrão: claro) */
+    try { if (localStorage.getItem('gf-tema') === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="css/marca-tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" defer></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="boot">
+      <svg class="boot-mark" viewBox="0 0 40 40" aria-hidden="true"><path d="M3 3h25l9 9v25H3z" fill="#003865"/><path d="M11 29v-6M17 29V16M23 29v-9M29 29V12" stroke="#7FE06C" stroke-width="3.2" stroke-linecap="round"/></svg>
+      <p>Carregando Gestão Financeira…</p>
+    </div>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+  <noscript>Este sistema precisa de JavaScript habilitado.</noscript>
+</body>
+</html>
