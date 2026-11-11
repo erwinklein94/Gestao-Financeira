@@ -1,6 +1,7 @@
 // =====================================================================
 // Dashboard da empresa
 // =====================================================================
+import { agruparItens } from '../itens.js';
 import { store, empresaPorSlug, contratosDaEmpresa } from '../state.js';
 import { resumo, resumoContrato, alertas, medicaoConta, classificacaoGastos } from '../calc.js';
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra } from '../charts.js';
@@ -102,6 +103,20 @@ function secaoClassificacao(e, C, ano) {
     </div>` : ''}`;
 }
 
+function secaoItens(itens, ano, tipo) {
+  const grupos = agruparItens(itens, tipo);
+  return `<section class="card" id="resumo-itens">
+    <div class="card-cab"><div><h3>Resumo por item</h3><div class="sub">${ano}${tipo ? ' · ' + esc(tipo) : ''} · Quantidades e valores somados por descrição e unidade</div></div></div>
+    <div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:480px">
+      ${grupos.length ? `<table class="tabela tabela-compacta">
+        <thead><tr><th>Item</th><th>Unidade</th><th class="num">Quantidade total</th><th class="num">Total em reais</th></tr></thead>
+        <tbody>${grupos.map((g) => `<tr><td class="forte">${esc(g.descricao)}</td><td>${esc(g.unidade || '—')}</td><td class="num">${fmtNum2(g.quantidade)}</td><td class="num forte">${fmtBRL(g.valor)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="3">Total dos itens</td><td class="num">${fmtBRL(soma(grupos.map((g) => g.valor)))}</td></tr></tfoot>
+      </table>` : vazioHTML('Nenhum item detalhado encontrado para a empresa no ano e filtro selecionados.', 'catalogo')}
+    </div>
+  </section>`;
+}
+
 let filtroTipo = null;
 
 export function cabecalhoEmpresa(e, ativa, extraDireita = '') {
@@ -165,6 +180,8 @@ export function render(c, { slug }) {
       ${kpi({ rotulo: 'Pode gastar por mês', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtBRL(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: filtroTipo ? `margem ${filtroTipo}` : `CAPEX ${Rc.orcAnual > 0 ? fmtBRL(Rc.margemMensal) : '—'} · OPEX ${Ro.orcAnual > 0 ? fmtBRL(Ro.margemMensal) : '—'}` })}
       ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtBRL(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}` })}
     </div>
+
+    ${secaoItens(C.itens, ano, filtroTipo)}
 
     ${secaoClassificacao(e, C, ano)}
 
