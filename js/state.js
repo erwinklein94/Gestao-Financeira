@@ -13,6 +13,7 @@ export const store = {
   orcamentos: [],
   previsoes: [],
   medicoes: [],
+  itens: [],
   pendencias: [],
   carregado: false,
 };
@@ -38,6 +39,7 @@ const TABELAS = {
   orcamentos: { tabela: 'gf_orcamentos', ordem: 'created_at' },
   previsoes: { tabela: 'gf_previsoes', ordem: 'created_at' },
   medicoes: { tabela: 'gf_medicoes', ordem: 'created_at' },
+  itens: { tabela: 'gf_medicao_itens', ordem: 'created_at' },
   pendencias: { tabela: 'gf_pendencias', ordem: 'created_at' },
 };
 
@@ -55,7 +57,7 @@ async function buscarTodos(tabela, ordem) {
   return saida;
 }
 
-const NUMERICOS = ['valor', 'valor_pago', 'valor_contrato', 'saldo_sap'];
+const NUMERICOS = ['valor', 'valor_pago', 'valor_contrato', 'saldo_sap', 'quantidade', 'valor_unitario'];
 function normalizar(linhas) {
   for (const l of linhas) for (const k of NUMERICOS) if (k in l && l[k] !== null) l[k] = Number(l[k]);
   return linhas;
@@ -120,6 +122,6 @@ export const empresasAtivas = () => store.empresas.filter((e) => e.ativo);
 
 export function anosDisponiveis() {
   const anos = new Set([anoAtual, anoAtual + 1, store.ano]);
-  for (const k of ['orcamentos', 'previsoes', 'medicoes']) for (const r of store[k]) anos.add(r.ano);
+  for (const k of ['orcamentos', 'previsoes', 'medicoes', 'itens']) for (const r of store[k]) anos.add(r.ano);
   return [...anos].sort((a, b) => b - a);
 }

@@ -2,12 +2,105 @@
 // Dashboard da empresa
 // =====================================================================
 import { store, empresaPorSlug, contratosDaEmpresa } from '../state.js';
-import { resumo, resumoContrato, alertas, medicaoConta } from '../calc.js';
+import { resumo, resumoContrato, alertas, medicaoConta, classificacaoGastos } from '../calc.js';
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra } from '../charts.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone, grafismo } from '../icons.js';
-import { fmtBRL, fmtPct, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO } from '../utils.js';
+import { fmtBRL, fmtPct, fmtNum2, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO, NATUREZAS, SEM_CLASS, baixarCSV } from '../utils.js';
 import { kpi, classeBarra, opcaoCurvaAcumulada, opcaoMensal } from './painel.js';
+
+const CLASSE_CSS = { CAPEX: 'capex', OPEX: 'opex', [SEM_CLASS]: 'semclass' };
+const ROTULO_CURTO = { CAPEX: 'CAPEX', OPEX: 'OPEX', [SEM_CLASS]: 'Sem class.' };
+
+/** Barra 100% empilhada CAPEX/OPEX/sem classificação. */
+export function barraClassificacao(valores) {
+  const total = soma(NATUREZAS.map((n) => valores[n] || 0));
+  if (total <= 0) return '<div class="barra-class" aria-hidden="true"></div>';
+  const titulo = NATUREZAS.map((n) => `${n}: ${fmtPct((valores[n] || 0) / total)}`).join(' · ');
+  return `<div class="barra-class" role="img" aria-label="${esc(titulo)}" title="${esc(titulo)}">${NATUREZAS.map((n) => (valores[n] > 0 ? `<span class="${CLASSE_CSS[n]}" style="width:${(valores[n] / total) * 100}%"></span>` : '')).join('')}</div>`;
+}
+export const legendaClassificacao = () => `<div class="class-legenda">${NATUREZAS.map((n) => `<span><i class="${CLASSE_CSS[n]}"></i>${esc(n)}</span>`).join('')}</div>`;
+
+/** Gráfico de barras empilhadas por mês e natureza. */
+export function opcaoClassMensal(porMes) {
+  const p = paleta();
+  const cor = { CAPEX: p.capex, OPEX: p.opex, [SEM_CLASS]: p.semclass };
+  const ultima = NATUREZAS.filter((n) => porMes[n].some((v) => v > 0)).pop();
+  return {
+    legend: { data: NATUREZAS },
+    tooltip: tooltipEixo(fmtBRL),
+    xAxis: eixoMeses(),
+    yAxis: eixoValor(),
+    series: NATUREZAS.map((n) => ({
+      name: n, type: 'bar', stack: 'nat', barMaxWidth: 26,
+      data: porMes[n].map((v) => (v ? Math.round(v * 100) / 100 : null)),
+      itemStyle: { color: cor[n], borderColor: p.superficie, borderWidth: 1, ...(n === ultima ? pontaBarra() : {}) },
+    })),
+  };
+}
+
+/** Rosca CAPEX × OPEX × sem classificação. */
+export function opcaoClassRosca(tot) {
+  const p = paleta();
+  const cor = { CAPEX: p.capex, OPEX: p.opex, [SEM_CLASS]: p.semclass };
+  const total = soma(NATUREZAS.map((n) => tot[n]));
+  return {
+    tooltip: tooltipItem(),
+    legend: { bottom: 0, top: 'auto', left: 'center' },
+    series: [{
+      name: 'Realizado', type: 'pie', radius: ['63%', '86%'], center: ['50%', '45%'], padAngle: 1, minAngle: 3,
+      itemStyle: { borderColor: p.superficie, borderWidth: 2, borderRadius: 4 },
+      label: { show: true, position: 'center', formatter: () => `{a|${fmtBRL(total)}}\n{b|realizado}`, rich: { a: { fontSize: 12.5, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
+      data: NATUREZAS.map((n) => ({ name: n, value: Math.round(tot[n] * 100) / 100, itemStyle: { color: cor[n] } })),
+    }],
+  };
+}
+
+function cartaoNatureza(n, C) {
+  const qtdCod = C.porCodigo.filter((x) => x.classificacao === n).length;
+  const icones = { CAPEX: ['camadas', ''], OPEX: ['relogio', 'azul-claro'], [SEM_CLASS]: ['alerta', 'amarelo'] };
+  const [ic, cor] = icones[n];
+  return kpi({
+    rotulo: n, valor: fmtBRL(C.tot[n]), icone: ic, cor, barra: C.pct[n] ?? 0, barraClasse: CLASSE_CSS[n],
+    detalhe: `<b>${fmtPct(C.pct[n])}</b> do realizado${C.itens.length ? ` · ${qtdCod} ${qtdCod === 1 ? 'código' : 'códigos'} de serviço` : ''}`,
+  });
+}
+
+function secaoClassificacao(e, C, ano) {
+  if (C.total <= 0) return '';
+  const temItens = C.itens.length > 0;
+  const nAbas = new Set(C.itens.map((i) => `${i.mes}|${i.aba}`)).size;
+  const meses = [...new Set(C.itens.map((i) => i.mes))].sort((a, b) => a - b).map((m) => MESES[m - 1]);
+  const tabEnc = C.porEncarregado.length ? `<table class="tabela tabela-compacta">
+      <thead><tr><th>Encarregado</th><th class="num">CAPEX</th><th class="num">OPEX</th><th class="num">Sem class.</th><th class="num">Total</th><th style="min-width:130px">Composição</th></tr></thead>
+      <tbody>${C.porEncarregado.map((x) => `<tr><td class="forte">${esc(x.nome)}<div class="sub-linha">${x.abas} ${x.abas === 1 ? 'aba' : 'abas'} de OS</div></td><td class="num">${fmtBRL(x.CAPEX)}</td><td class="num">${fmtBRL(x.OPEX)}</td><td class="num">${fmtBRL(x[SEM_CLASS])}</td><td class="num forte">${fmtBRL(x.total)}</td><td>${barraClassificacao(x)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>Total</td>${NATUREZAS.map((n) => `<td class="num">${fmtBRL(soma(C.porEncarregado.map((x) => x[n])))}</td>`).join('')}<td class="num">${fmtBRL(C.totalItens)}</td><td>${barraClassificacao(Object.fromEntries(NATUREZAS.map((n) => [n, soma(C.porEncarregado.map((x) => x[n]))])))}</td></tr></tfoot>
+    </table>` : vazioHTML('Sem itens detalhados por encarregado.', 'usuarios');
+  const tabCod = C.porCodigo.length ? `<table class="tabela tabela-compacta">
+      <thead><tr><th>Código</th><th>Serviço</th><th>Natureza</th><th class="num">Quantidade</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
+      <tbody>${C.porCodigo.map((x) => `<tr><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
+    </table>` : vazioHTML('Sem itens por código de serviço.', 'catalogo');
+
+  return `<section class="card" id="classificacao">
+      <div class="card-cab" style="flex-wrap:wrap">
+        <div><h3>Classificação contábil dos gastos</h3><div class="sub">Quanto do realizado em ${ano} é CAPEX, OPEX ou está sem classificação no catálogo</div></div>
+        <div class="card-acoes">${temItens ? `<button class="btn btn-secundario btn-sm" id="clsCsv">${icone('download', 'icon-sm')}Exportar itens (CSV)</button>` : ''}</div>
+      </div>
+      <div class="card-corpo">
+        <div class="class-kpis">${NATUREZAS.map((n) => cartaoNatureza(n, C)).join('')}</div>
+        <div style="margin-top:16px;display:grid;gap:8px">${barraClassificacao(C.tot)}${legendaClassificacao()}</div>
+        ${temItens ? `<div class="legenda-nota">${icone('info', 'icon-sm')}<span>Fonte: ${C.itens.length.toLocaleString('pt-BR')} itens (código × valor) de ${nAbas} abas de encarregados das planilhas de medição (${meses.join(', ')}). A natureza de cada código vem do <a href="#/catalogo">Catálogo CAPEX/OPEX</a>; códigos que o catálogo não classifica como CAPEX nem OPEX aparecem como "Sem classificação".</span></div>` : ''}
+      </div>
+    </section>
+    <div class="grade g-2-1">
+      ${cartaoGrafico({ id: 'eClassMes', titulo: 'Natureza do gasto mês a mês', sub: `Realizado ${ano} por classificação contábil`, tabela: { colunas: [{ rotulo: 'Mês' }, ...NATUREZAS.map((n) => ({ rotulo: ROTULO_CURTO[n], num: true })), { rotulo: 'Total', num: true }], linhas: MESES.map((m, i) => [m, ...NATUREZAS.map((n) => fmtBRL(C.porMes[n][i] || null)), fmtBRL(soma(NATUREZAS.map((n) => C.porMes[n][i])) || null)]) } })}
+      ${cartaoGrafico({ id: 'eTipo', titulo: 'CAPEX × OPEX × sem classificação', sub: `Participação no realizado ${ano}`, alturaClasse: 'grafico-sm', tabela: { colunas: [{ rotulo: 'Natureza' }, { rotulo: 'Realizado', num: true }, { rotulo: '%', num: true }], linhas: NATUREZAS.map((n) => [n, fmtBRL(C.tot[n]), fmtPct(C.pct[n])]) } })}
+    </div>
+    ${temItens ? `<div class="grade g-2">
+      <section class="card"><div class="card-cab"><div><h3>Por encarregado</h3><div class="sub">Abas dos encarregados · ${ano}</div></div></div><div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:420px">${tabEnc}</div></section>
+      <section class="card"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div><div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:420px">${tabCod}</div></section>
+    </div>` : ''}`;
+}
 
 let filtroTipo = null;
 
@@ -39,7 +132,9 @@ export function render(c, { slug }) {
   const R = resumo({ ano, empresaId: e.id, tipo: filtroTipo });
   const Rc = resumo({ ano, empresaId: e.id, tipo: 'CAPEX' });
   const Ro = resumo({ ano, empresaId: e.id, tipo: 'OPEX' });
-  const contratos = contratosDaEmpresa(e.id).filter((x) => !filtroTipo || x.tipo === filtroTipo);
+  const C = classificacaoGastos({ ano, empresaId: e.id });
+  const contratos = contratosDaEmpresa(e.id).filter((x) => !filtroTipo || x.tipo === filtroTipo
+    || store.medicoes.some((m) => m.contrato_id === x.id && m.ano === ano && m.tipo === filtroTipo));
   const rc = contratos.map((ct) => ({ ct, r: resumoContrato(ct, ano) }));
   const valorContratado = soma(rc.filter((x) => x.ct.status !== 'Encerrado').map((x) => x.r.valor));
   const medidoTotal = soma(rc.map((x) => x.r.medido));
@@ -54,7 +149,7 @@ export function render(c, { slug }) {
     <div class="hero-num"><small>Valor contratado</small><strong>${fmtBRL(valorContratado)}</strong></div>
     <div class="hero-num"><small>Medido acumulado</small><strong>${fmtBRL(medidoTotal)}</strong></div>
     <div class="hero-num"><small>Saldo contratual</small><strong style="${saldoContratual < 0 ? 'color:#FFB3B3' : ''}">${fmtBRL(saldoContratual)}</strong></div>
-    <div class="segmentado" role="group" aria-label="Filtrar CAPEX/OPEX">${[[null, 'Total'], ['CAPEX', 'CAPEX'], ['OPEX', 'OPEX']].map(([v, t]) => `<button data-tipo="${v || ''}" class="${filtroTipo === v ? 'ativo' : ''}">${t}</button>`).join('')}</div>
+    <div class="segmentado" role="group" aria-label="Filtrar CAPEX/OPEX">${[[null, 'Total'], ['CAPEX', 'CAPEX'], ['OPEX', 'OPEX'], [SEM_CLASS, 'Sem class.']].map(([v, t]) => `<button data-tipo="${v || ''}" class="${filtroTipo === v ? 'ativo' : ''}">${t}</button>`).join('')}</div>
   </div>`;
 
   c.innerHTML = `<div class="pagina">
@@ -71,15 +166,14 @@ export function render(c, { slug }) {
       ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtBRL(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}` })}
     </div>
 
+    ${secaoClassificacao(e, C, ano)}
+
     <div class="grade g-2">
       ${cartaoGrafico({ id: 'eMensal', titulo: 'Gastos mensais: previstos × reais', sub: `${ano}${rotTipo} · barras hachuradas = projeção`, tabela: tabelaDetalhe(R) })}
       ${cartaoGrafico({ id: 'eAder', titulo: 'Aderência ao forecast', sub: 'Realizado ÷ previsto em cada mês (100% = no alvo)', nota: 'Acima de 100%: gastou mais que o previsto; abaixo: gastou menos.' })}
     </div>
 
-    <div class="grade g-2-1">
-      ${cartaoGrafico({ id: 'eCurva', titulo: 'Curva acumulada', sub: 'Orçado × realizado × projeção' })}
-      ${cartaoGrafico({ id: 'eTipo', titulo: 'CAPEX × OPEX', sub: `Realizado ${ano}`, alturaClasse: 'grafico-sm', tabela: { colunas: [{ rotulo: 'Natureza' }, { rotulo: 'Orçado', num: true }, { rotulo: 'Realizado', num: true }, { rotulo: 'Pode gastar/mês', num: true }], linhas: [['CAPEX', fmtBRL(Rc.orcAnual), fmtBRL(Rc.realAno), Rc.orcAnual ? fmtBRL(Rc.margemMensal) : '—'], ['OPEX', fmtBRL(Ro.orcAnual), fmtBRL(Ro.realAno), Ro.orcAnual ? fmtBRL(Ro.margemMensal) : '—']] } })}
-    </div>
+    ${cartaoGrafico({ id: 'eCurva', titulo: 'Curva acumulada', sub: 'Orçado × realizado × projeção' })}
 
     <section class="card">
       <div class="card-cab"><div><h3>Contratos</h3><div class="sub">${contratos.length} contrato(s) · consumo do valor contratado (todos os anos)</div></div>
@@ -124,16 +218,17 @@ export function render(c, { slug }) {
     document.getElementById('eAder').innerHTML = vazioHTML('Cadastre previsões (forecast) em Registros → Previsões para medir a aderência.', 'previsao');
   }
   grafico('eCurva', opcaoCurvaAcumulada(R));
-  grafico('eTipo', {
-    tooltip: tooltipItem(),
-    legend: { bottom: 0, top: 'auto', left: 'center' },
-    series: [{
-      name: 'Realizado', type: 'pie', radius: ['63%', '86%'], center: ['50%', '46%'], padAngle: 1,
-      itemStyle: { borderColor: p.superficie, borderWidth: 2, borderRadius: 4 },
-      label: { show: true, position: 'center', formatter: () => `{a|${fmtBRL(Rc.realAno + Ro.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 12.5, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
-      data: [{ name: 'CAPEX', value: Math.round(Rc.realAno), itemStyle: { color: p.capex } }, { name: 'OPEX', value: Math.round(Ro.realAno), itemStyle: { color: p.opex } }],
-    }],
-  });
+  if (C.total > 0) {
+    grafico('eClassMes', opcaoClassMensal(C.porMes));
+    grafico('eTipo', opcaoClassRosca(C.tot));
+  }
+  c.querySelector('#clsCsv')?.addEventListener('click', () => baixarCSV(`itens-classificacao-${e.slug}-${ano}.csv`, [
+    { rotulo: 'Empresa', valor: () => e.nome }, { rotulo: 'Ano', valor: 'ano' }, { rotulo: 'Mês', valor: 'mes' },
+    { rotulo: 'Encarregado', valor: 'encarregado' }, { rotulo: 'Aba', valor: 'aba' }, { rotulo: 'OS', valor: 'ordem_servico' }, { rotulo: 'Atividade', valor: 'atividade' },
+    { rotulo: 'Código', valor: 'codigo_servico' }, { rotulo: 'Serviço', valor: 'descricao' }, { rotulo: 'Unidade', valor: 'unidade' },
+    { rotulo: 'Quantidade', valor: 'quantidade' }, { rotulo: 'Valor unitário', valor: 'valor_unitario' }, { rotulo: 'Valor', valor: 'valor' },
+    { rotulo: 'Classificação', valor: 'classificacao' }, { rotulo: 'Arquivo', valor: 'arquivo' },
+  ], [...C.itens].sort((a, b) => a.mes - b.mes || String(a.encarregado).localeCompare(String(b.encarregado)))));
 
   const porStatus = STATUS_MEDICAO.map((s) => ({ s, v: soma(meds.filter((m) => m.status === s).map((m) => m.valor)), n: meds.filter((m) => m.status === s).length })).filter((x) => x.n > 0);
   if (porStatus.length) {

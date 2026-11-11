@@ -34,6 +34,7 @@
   --c-badge-neutro-bg: var(--marca-cinza-100); --c-badge-neutro-tx: var(--marca-texto);
   --c-capex: var(--marca-azul);
   --c-opex: var(--marca-azul-claro);
+  --c-semclass: var(--marca-amarelo);
   --sombra: var(--marca-sombra);
   --sombra-hover: var(--marca-sombra-hover);
   --sidebar-w: 268px;
@@ -70,6 +71,7 @@
   --c-badge-neutro-bg: rgba(189, 204, 212, 0.14); --c-badge-neutro-tx: var(--marca-cinza-100);
   --c-capex: var(--marca-azul-claro);
   --c-opex: var(--marca-verde-claro);
+  --c-semclass: var(--marca-amarelo);
   --sombra: 0 3px 18px rgba(0, 0, 0, 0.28);
   --sombra-hover: 0 10px 30px rgba(0, 0, 0, 0.4);
   color-scheme: dark;
@@ -324,7 +326,27 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .b-neutro { background: var(--c-badge-neutro-bg); color: var(--c-badge-neutro-tx); }
 .b-capex { background: var(--c-capex); color: #fff; }
 .b-opex { background: var(--c-opex); color: var(--marca-azul-noite); }
+.b-semclass { background: var(--c-semclass); color: var(--marca-azul-noite); }
 :root[data-theme="dark"] .b-capex { color: var(--marca-azul-noite); }
+
+/* ---------- Classificação contábil (CAPEX × OPEX × sem classificação) ---------- */
+.kpi-icone.amarelo { background: var(--marca-amarelo); color: var(--marca-azul-noite); }
+:root[data-theme="dark"] .kpi-icone.amarelo { background: var(--marca-amarelo); }
+.class-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.kpi-barra > span.capex { background: var(--c-capex); }
+.kpi-barra > span.opex { background: var(--c-opex); }
+.kpi-barra > span.semclass { background: var(--c-semclass); }
+.barra-class { display: flex; height: 10px; min-width: 110px; border-radius: 999px; overflow: hidden; background: var(--c-superficie-3); }
+.barra-class > span { display: block; height: 100%; }
+.barra-class > span + span { box-shadow: -1px 0 0 var(--c-superficie); }
+.barra-class .capex { background: var(--c-capex); }
+.barra-class .opex { background: var(--c-opex); }
+.barra-class .semclass { background: var(--c-semclass); }
+.class-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--c-texto-suave); }
+.class-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.class-legenda .capex { background: var(--c-capex); }
+.class-legenda .opex { background: var(--c-opex); }
+.class-legenda .semclass { background: var(--c-semclass); }
 
 /* ---------- Tabelas ---------- */
 .tabela-wrap { overflow-x: auto; }
@@ -556,6 +578,7 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
   .hero h1 { font-size: 22px; }
   .hero-grafismo { display: none; }
   .kpis { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .class-kpis { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .contratos-grid { grid-template-columns: minmax(0, 1fr); }
   .apresentacao-barra .ap-info { min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
 }

@@ -2,9 +2,21 @@
 // Cálculos financeiros: orçado × previsto × realizado, projeções e margens
 // =====================================================================
 import { store, contratosDaEmpresa, empresaPorId, empresasAtivas } from './state.js';
-import { soma, MESES_LONGOS, fmtBRL, fmtPct } from './utils.js';
+import { soma, MESES_LONGOS, fmtBRL, fmtPct, NATUREZAS, SEM_CLASS } from './utils.js';
 
 export const medicaoConta = (m) => m.status !== 'Cancelada' && m.status !== 'Glosada';
+
+/**
+ * Média dos últimos 3 meses fechados que tiveram medição. Meses sem nenhuma
+ * medição lançada (ex.: planilha do mês ainda não recebida) ficam fora da média
+ * para não puxar o ritmo para baixo.
+ */
+function ritmoMedio(serieValores, serieReferencia, fechados) {
+  const comDado = [];
+  for (let i = 0; i < fechados; i++) if (serieReferencia[i] !== 0) comDado.push(i);
+  const janela = comDado.slice(-3);
+  return janela.length ? soma(janela.map((i) => serieValores[i])) / janela.length : 0;
+}
 
 /** Primeiro mês "aberto" do ano (1–12). 13 = ano encerrado; 1 = ano futuro. */
 export function mesAberto(ano) {
@@ -50,8 +62,9 @@ export function resumo({ ano = store.ano, empresaId = null, tipo = null } = {}) 
   const realAno = soma(real);
   const realFechado = soma(real.slice(0, fechados));
 
-  const janela = real.slice(Math.max(0, fechados - 3), fechados);
-  const ritmo = janela.length ? soma(janela) / janela.length : 0;
+  // meses com alguma medição no recorte (qualquer natureza) definem a janela do ritmo
+  const referencia = tipo ? serie(store.medicoes.filter(medicaoConta), { ano, empresaId }) : real;
+  const ritmo = ritmoMedio(real, referencia, fechados);
 
   const proj = real.map((v, i) => (i < fechados ? null : Math.max(v, prev[i] > 0 ? prev[i] : ritmo)));
   const projRestante = soma(proj.filter((x) => x !== null));
@@ -91,6 +104,44 @@ export function saldoProjetadoMensal(r) {
   });
 }
 
+// ---------- Classificação contábil (CAPEX × OPEX × sem classificação) ----------
+/**
+ * Totais do realizado por natureza (a partir das medições) e, quando houver
+ * itens importados das planilhas, o detalhamento por mês, encarregado e código.
+ */
+export function classificacaoGastos({ ano = store.ano, empresaId = null } = {}) {
+  const vazioNat = () => Object.fromEntries(NATUREZAS.map((n) => [n, 0]));
+  const meds = store.medicoes.filter((m) => medicaoConta(m) && m.ano === ano && (!empresaId || m.empresa_id === empresaId));
+  const tot = vazioNat();
+  const porMes = Object.fromEntries(NATUREZAS.map((n) => [n, Array(12).fill(0)]));
+  for (const m of meds) {
+    const n = NATUREZAS.includes(m.tipo) ? m.tipo : SEM_CLASS;
+    tot[n] += Number(m.valor) || 0;
+    porMes[n][m.mes - 1] += Number(m.valor) || 0;
+  }
+  const total = soma(Object.values(tot));
+  const pct = Object.fromEntries(NATUREZAS.map((n) => [n, total > 0 ? tot[n] / total : null]));
+
+  const itens = store.itens.filter((i) => i.ano === ano && (!empresaId || i.empresa_id === empresaId));
+  const enc = new Map();
+  const cod = new Map();
+  for (const i of itens) {
+    const n = NATUREZAS.includes(i.classificacao) ? i.classificacao : SEM_CLASS;
+    const v = Number(i.valor) || 0;
+    const chaveEnc = i.encarregado || '—';
+    if (!enc.has(chaveEnc)) enc.set(chaveEnc, { nome: chaveEnc, ...vazioNat(), total: 0, abas: new Set() });
+    const e = enc.get(chaveEnc);
+    e[n] += v; e.total += v; if (i.aba) e.abas.add(`${i.mes}|${i.aba}`);
+    if (!cod.has(i.codigo_servico)) cod.set(i.codigo_servico, { codigo: i.codigo_servico, descricao: i.descricao, unidade: i.unidade, classificacao: n, noCatalogo: i.no_catalogo, quantidade: 0, valor: 0, meses: new Set() });
+    const c = cod.get(i.codigo_servico);
+    c.quantidade += Number(i.quantidade) || 0; c.valor += v; c.meses.add(i.mes);
+  }
+  const porEncarregado = [...enc.values()].map((e) => ({ ...e, abas: e.abas.size })).sort((a, b) => b.total - a.total);
+  const porCodigo = [...cod.values()].map((c) => ({ ...c, meses: c.meses.size })).sort((a, b) => b.valor - a.valor);
+  const totalItens = soma(itens.map((i) => i.valor));
+  return { tot, pct, total, porMes, itens, totalItens, porEncarregado, porCodigo };
+}
+
 // ---------- Contratos ----------
 export function resumoContrato(c, ano = store.ano) {
   const meds = store.medicoes.filter((m) => m.contrato_id === c.id && medicaoConta(m));
@@ -104,8 +155,7 @@ export function resumoContrato(c, ano = store.ano) {
   // ritmo do contrato: média dos últimos 3 meses (calendário) com base no ano corrente
   const fechados = mesesFechados(ano);
   const porMes = serie(meds, { ano });
-  const janela = porMes.slice(Math.max(0, fechados - 3), fechados);
-  const ritmo = janela.length ? soma(janela) / janela.length : 0;
+  const ritmo = ritmoMedio(porMes, porMes, fechados);
   const cobertura = ritmo > 0 ? saldo / ritmo : null;
 
   const futuras = store.previsoes.filter((p) => p.contrato_id === c.id && (p.ano > ano || (p.ano === ano && p.mes > fechados)));
@@ -148,6 +198,11 @@ export function alertas(ano = store.ano, empresaId = null) {
       } else if (r.orcAnual === 0 && r.realAno > 0) {
         lista.push({ nivel: 'info', icone: 'orcamento', titulo: `${e.nome}: ${tipo} sem orçamento cadastrado`, detalhe: `Já há ${fmtBRL(r.realAno)} realizado em ${ano}.`, link: `#/empresa/${e.slug}/registros/orcamento` });
       }
+    }
+    const semClass = soma(store.medicoes.filter((m) => m.empresa_id === e.id && m.ano === ano && medicaoConta(m) && m.tipo === SEM_CLASS).map((m) => m.valor));
+    if (semClass > 0) {
+      const realEmp = soma(store.medicoes.filter((m) => m.empresa_id === e.id && m.ano === ano && medicaoConta(m)).map((m) => m.valor));
+      lista.push({ nivel: 'info', icone: 'catalogo', titulo: `${e.nome}: gasto sem classificação contábil`, detalhe: `${fmtBRL(semClass)} (${fmtPct(realEmp ? semClass / realEmp : null)} do realizado) em códigos que o catálogo não classifica como CAPEX nem OPEX`, link: `#/empresa/${e.slug}/dashboard` });
     }
     const emAprov = store.medicoes.filter((m) => m.empresa_id === e.id && m.ano === ano && m.status === 'Em aprovação');
     if (emAprov.length) {

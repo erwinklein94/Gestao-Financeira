@@ -3,6 +3,9 @@ import { icone } from './icons.js';
 export const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 export const MESES_LONGOS = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 export const TIPOS = ['CAPEX', 'OPEX'];
+/** Naturezas do gasto realizado: o catálogo pode não classificar o código (Sem classificação). */
+export const SEM_CLASS = 'Sem classificação';
+export const NATUREZAS = ['CAPEX', 'OPEX', SEM_CLASS];
 export const STATUS_MEDICAO = ['Em elaboração', 'Em aprovação', 'Aprovada', 'Paga', 'Glosada', 'Cancelada'];
 export const STATUS_CONTRATO = ['Ativo', 'Em mobilização', 'Suspenso', 'Encerrado'];
 export const STATUS_PENDENCIA = ['Aberta', 'Em andamento', 'Concluída'];
@@ -280,7 +283,10 @@ export function baixarCSV(nomeArquivo, colunas, linhas) {
 }
 
 // ---------- Badges ----------
-export function badgeTipo(t) { return `<span class="badge ${t === 'CAPEX' ? 'b-capex' : 'b-opex'}">${esc(t)}</span>`; }
+export function badgeTipo(t) {
+  const classe = t === 'CAPEX' ? 'b-capex' : t === 'OPEX' ? 'b-opex' : 'b-semclass';
+  return `<span class="badge ${classe}">${esc(t || SEM_CLASS)}</span>`;
+}
 export function badgeStatusMedicao(s) {
   const map = { 'Paga': 'b-ok', 'Aprovada': 'b-info', 'Em aprovação': 'b-alerta', 'Em elaboração': 'b-neutro', 'Glosada': 'b-erro', 'Cancelada': 'b-neutro' };
   return `<span class="badge ${map[s] || 'b-neutro'}">${esc(s)}</span>`;

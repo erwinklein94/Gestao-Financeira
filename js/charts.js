@@ -28,6 +28,7 @@ export function paleta() {
     projecao: '#F78344',
     capex: d ? '#32A6E6' : '#003865',
     opex: d ? '#7FE06C' : '#32A6E6',
+    semclass: '#FBD300',
     ok: d ? '#7FE06C' : '#1E9F7F',
     alerta: '#FBD300',
     erro: '#D84545',
