@@ -74,16 +74,23 @@ export function render(c, params = {}) {
   </div>`;
 
   c.querySelector('#btnPerfil').addEventListener('click', async (ev) => {
+    const botao = ev.currentTarget;
+    if (botao.disabled) return;
     const f = c.querySelector('#fPerfil');
     const v = lerCampos(f, campos);
     if (!v.nome) { toast('Informe seu nome.', 'erro'); return; }
-    ev.currentTarget.disabled = true;
-    const { data, error } = await sb.from('gf_perfis').update(v).eq('id', p.id).select().single();
-    ev.currentTarget.disabled = false;
-    if (error) { toast(erroAmigavel(error), 'erro'); return; }
-    store.perfil = { ...store.perfil, ...data };
-    toast('Perfil atualizado.');
-    location.reload();
+    botao.disabled = true;
+    try {
+      const { data, error } = await sb.from('gf_perfis').update(v).eq('id', p.id).select().single();
+      if (error) throw error;
+      store.perfil = { ...store.perfil, ...data };
+      toast('Perfil atualizado.');
+      location.reload();
+    } catch (erro) {
+      toast(erroAmigavel(erro), 'erro');
+    } finally {
+      botao.disabled = false;
+    }
   });
 
   c.querySelector('#btnSenha').addEventListener('click', async () => {

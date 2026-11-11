@@ -20,6 +20,14 @@ async function asRole(i) {
   await db.query("select set_config('request.jwt.claim.sub',$1,false),set_config('request.jwt.claims',$2,false)",[ids[i],JSON.stringify({email:`${['editor','admin','leitor'][i]}@example.test`})]);
   await db.exec('set role authenticated');
 }
+for (let i = 0; i < ids.length; i++) {
+  await asRole(i);
+  const salvo = await db.query("update gf_perfis set nome='Nome editado',cargo='Analista',area='Operações',telefone='123',localidade='São Paulo' where id=auth.uid() returning nome,cargo,area,telefone,localidade,papel");
+  assert.equal(salvo.rows.length,1,'Cada papel pode editar seu próprio perfil');
+  assert.equal(salvo.rows[0].nome,'Nome editado');
+  assert.equal(salvo.rows[0].papel,['editor','admin','leitor'][i]);
+  assert.equal((await db.query('update gf_perfis set nome=$1 where id=$2 returning id',['Outro',ids[(i+1)%ids.length]])).rows.length,0,'Não pode editar o perfil de outra pessoa');
+}
 await asRole(1);
 await db.exec("insert into gf_empresas(slug,nome) values ('teste','Antes'); update gf_empresas set nome='Depois' where slug='teste';");
 await db.exec("select gf_registrar_atividade('acesso','#/painel')");
