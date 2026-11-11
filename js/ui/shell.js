@@ -2,7 +2,7 @@
 // Estrutura da aplicação: menu lateral recolhível, barra superior,
 // tema claro/escuro e modo apresentação.
 // =====================================================================
-import { store, empresasAtivas, anosDisponiveis, definirAno, ehAdmin } from '../state.js';
+import { store, empresasAtivas, anosDisponiveis, definirAno, ehEditor, podeGerenciarAcessos } from '../state.js';
 import { icone, MARCA_SVG } from '../icons.js';
 import { esc, iniciais, el } from '../utils.js';
 import { corEmpresa } from '../charts.js';
@@ -60,7 +60,7 @@ export function montarShell(raiz, { onSair, onTema }) {
               <div style="padding:8px 10px 10px"><strong style="color:var(--c-titulo);display:block">${esc(store.perfil?.nome || '')}</strong><span class="muted small">${esc(store.perfil?.email || '')}</span></div>
               <div class="sep"></div>
               <a href="#/perfil">${icone('usuario')}Meu perfil</a>
-              ${ehAdmin() ? `<a href="#/perfil?aba=acessos">${icone('usuarios')}Gerenciar acessos</a>` : ''}
+              ${podeGerenciarAcessos() ? `<a href="#/perfil?aba=acessos">${icone('usuarios')}Gerenciar acessos</a>` : ''}
               <div class="sep"></div>
               <button id="tbSair">${icone('sair')}Sair</button>
             </div>
@@ -128,6 +128,7 @@ export function renderNav() {
   nav.innerHTML = `
     <div class="sb-secao">Visão geral</div><div class="sb-secao-sep"></div>
     <a class="sb-link" href="#/painel" data-rota="#/painel" title="Painel geral">${icone('painel')}<span class="sb-rotulo">Painel geral</span></a>
+    ${ehEditor() ? `<a class="sb-link" href="#/auditoria" data-rota="#/auditoria" title="Auditoria">${icone('escudo')}<span class="sb-rotulo">Auditoria</span></a>` : ''}
     <div class="sb-secao">Empresas</div><div class="sb-secao-sep"></div>
     ${empresas.map((e) => `
       <div class="sb-grupo ${abertos.includes(e.slug) ? 'aberto' : ''}" data-grupo="${esc(e.slug)}">

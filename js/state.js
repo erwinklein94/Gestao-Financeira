@@ -31,6 +31,8 @@ export function definirAno(ano) {
 
 export const podeEditar = () => ['admin', 'editor'].includes(store.perfil?.papel);
 export const ehAdmin = () => store.perfil?.papel === 'admin';
+export const ehEditor = () => store.perfil?.papel === 'editor';
+export const podeGerenciarAcessos = () => ehEditor();
 
 // ---------- Carga ----------
 const TABELAS = {

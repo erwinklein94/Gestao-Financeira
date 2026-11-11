@@ -1,0 +1,11 @@
+{
+  "name": "gestao-financeira",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tests/auditoria.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.3.14"
+  }
+}

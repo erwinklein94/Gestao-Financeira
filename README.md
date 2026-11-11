@@ -30,8 +30,25 @@ Recursos gerais: menu lateral recolhível, **tema claro/escuro** (padrão claro)
 
 O login usa Supabase Auth (e-mail e senha). Só entram e-mails liberados na lista de **acessos autorizados**:
 
-1. A administradora libera o e-mail em **Meu perfil → Acessos autorizados** (permissões: Administradora, Editor ou Leitor).
+1. O Editor libera o e-mail em **Meu perfil → Acessos autorizados** (permissões: Coordenador, Editor ou Leitor).
 2. A pessoa abre o site, escolhe **Primeiro acesso**, informa o e-mail liberado e cria a própria senha.
+
+O **Coordenador** mantém a gestão operacional anterior, mas não consulta auditoria nem gerencia acessos. Para compatibilidade com os cadastros existentes, seu papel interno continua `admin`. Somente o **Editor** vê Auditoria e gerencia acessos, com proteção tanto na interface quanto por RLS. O editor não pode remover ou rebaixar o próprio acesso.
+
+### Auditoria e implantação
+
+Aplique `supabase/migrations/20261111231026_gf_editor_auditoria.sql` no mesmo projeto configurado em `js/config.js` antes de usar os novos recursos. O push do site não aplica migrações no Supabase. O primeiro Editor deve ser autorizado por um operador do banco, mantendo dados pessoais de provisionamento fora do repositório.
+
+- A página Auditoria consulta 200 registros por página, em ordem de data e ID, com filtros de pessoa e ação.
+- Triggers registram inserções, alterações e exclusões nas tabelas de negócio, catálogo, itens, perfis e acessos. Guardam ator, papel no momento da ação, horário do servidor e imagens antes/depois.
+- A interface informa entrada no site, páginas abertas, saída pelo botão, exportação CSV e troca de senha. Esses eventos dependem do navegador e não representam cada clique nem fechamento da aba. Alterações de dados não dependem desses eventos: são auditadas no banco.
+- Último acesso significa a última entrada/reabertura autenticada do site, e não um indicador de presença online. Os horários da auditoria são exibidos em Brasília.
+- Eventos de editores são excluídos da consulta. Eventos antigos sem papel registrado permanecem identificados como históricos, sem atribuir retrospectivamente um papel que pode ter mudado.
+- Não há reconstrução de eventos anteriores à ativação da trilha. Senhas e tokens não são registrados.
+
+### Testes
+
+Execute `pnpm install --frozen-lockfile` e `pnpm test`. Os testes aplicam todas as migrações em PostgreSQL local isolado (PGlite) e verificam permissões de Editor/Coordenador/Leitor, alterações antes/depois, bloqueio de acesso, prevenção de elevação de privilégios e paginação. Também verificam a renderização da página com API simulada. Não usam nem alteram o banco publicado.
 
 ## Tecnologia
 

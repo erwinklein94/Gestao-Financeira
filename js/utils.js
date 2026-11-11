@@ -278,6 +278,7 @@ export function baixarCSV(nomeArquivo, colunas, linhas) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = nomeArquivo;
+  window.dispatchEvent(new CustomEvent('gf:exportacao'));
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 }

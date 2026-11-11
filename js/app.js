@@ -1,6 +1,7 @@
 // =====================================================================
 // Gestão Financeira — inicialização, autenticação e controle de acesso
 // =====================================================================
+import { registrarAtividade } from './atividade.js';
 import { sb, configurado } from './supabase.js';
 import { store, carregarDados, on } from './state.js';
 import { montarShell, renderNav, preencherAnos } from './ui/shell.js';
@@ -14,6 +15,7 @@ let ouvintesLigados = false;
 let emRecuperacao = /type=recovery/.test(location.hash);
 
 async function sair() {
+  await registrarAtividade('saida');
   await sb.auth.signOut();
   store.perfil = null; store.sessao = null; iniciado = false;
   location.hash = '';
@@ -30,6 +32,7 @@ async function entrarNoSistema(sessao) {
   }
   if (!perfil) { renderSemAcesso(raiz, sessao.user.email, sair); return; }
   store.perfil = perfil;
+  await registrarAtividade('acesso');
 
   raiz.innerHTML = '<div class="boot"><p>Carregando dados…</p></div>';
   try {
@@ -59,6 +62,7 @@ async function iniciar() {
       renderNovaSenha(raiz, async () => { emRecuperacao = false; history.replaceState(null, '', location.pathname); await entrarNoSistema(sessao); });
     } else if (evento === 'SIGNED_OUT') {
       iniciado = false;
+      store.perfil = null; store.sessao = null;
       if (!document.querySelector('.login')) renderLogin(raiz);
     }
   });
@@ -74,5 +78,7 @@ window.addEventListener('unhandledrejection', (e) => {
   console.error(e.reason);
   if (store.perfil) toast(erroAmigavel(e.reason), 'erro', 6000);
 });
+
+window.addEventListener('gf:exportacao', () => registrarAtividade('exportacao'));
 
 iniciar();

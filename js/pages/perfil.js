@@ -1,18 +1,19 @@
 // =====================================================================
-// Meu perfil + gestão de acessos (administradora)
+// Meu perfil + gestão de acessos (editor)
 // =====================================================================
+import { registrarAtividade } from '../atividade.js';
 import { sb } from '../supabase.js';
-import { store, ehAdmin, empresaPorId } from '../state.js';
+import { store, podeGerenciarAcessos } from '../state.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone } from '../icons.js';
-import { esc, iniciais, fmtDataHora, fmtData, tempoRelativo, competencia, fmtBRL, formulario, confirmar, toast, erroAmigavel, vazioHTML, lerCampos } from '../utils.js';
+import { esc, iniciais, fmtDataHora, fmtData, formulario, confirmar, toast, erroAmigavel, lerCampos } from '../utils.js';
 
 const PAPEIS = [
-  { valor: 'admin', rotulo: 'Administradora(or) — tudo, inclusive acessos' },
-  { valor: 'editor', rotulo: 'Editor — lança e altera registros' },
+  { valor: 'admin', rotulo: 'Coordenador — gestão operacional, sem auditoria ou gestão de acessos' },
+  { valor: 'editor', rotulo: 'Editor — registros, auditoria e novos acessos' },
   { valor: 'leitor', rotulo: 'Leitor — somente visualização' },
 ];
-const nomePapel = (p) => ({ admin: 'Administradora', editor: 'Editor', leitor: 'Leitor' }[p] || p);
+const nomePapel = (p) => ({ admin: 'Coordenador', editor: 'Editor', leitor: 'Leitor' }[p] || p);
 
 export function render(c, params = {}) {
   definirTitulo('Meu perfil', [{ rotulo: 'Conta' }, { rotulo: 'Meu perfil' }]);
@@ -65,12 +66,7 @@ export function render(c, params = {}) {
       </section>
     </div>
 
-    <section class="card">
-      <div class="card-cab"><div><h3>Minha atividade recente</h3><div class="sub">Últimas alterações feitas por você</div></div></div>
-      <div class="card-corpo"><div class="lista rolavel" id="atividade"><p class="muted small">Carregando…</p></div></div>
-    </section>
-
-    ${ehAdmin() ? `<section class="card" id="secAcessos">
+    ${podeGerenciarAcessos() ? `<section class="card" id="secAcessos">
       <div class="card-cab"><div><h3>Acessos autorizados</h3><div class="sub">Somente e-mails desta lista conseguem entrar. A pessoa liberada usa "Primeiro acesso" na tela de login e cria a própria senha.</div></div>
         <div class="card-acoes"><button class="btn btn-primario btn-sm" id="btnNovoAcesso">${icone('mais', 'icon-sm')}Liberar acesso</button></div></div>
       <div class="card-corpo sem-padding tabela-wrap" id="acessos"><p class="muted small" style="padding:16px">Carregando…</p></div>
@@ -97,36 +93,16 @@ export function render(c, params = {}) {
     const { error } = await sb.auth.updateUser({ password: f.senha.value });
     if (error) { toast(erroAmigavel(error), 'erro'); return; }
     f.reset();
+    registrarAtividade('senha');
     toast('Senha alterada com sucesso.');
   });
 
-  carregarAtividade(c.querySelector('#atividade'), p.id);
-  if (ehAdmin()) {
+
+  if (podeGerenciarAcessos()) {
     carregarAcessos(c.querySelector('#acessos'));
     c.querySelector('#btnNovoAcesso').addEventListener('click', () => formAcesso(c));
     if (params.aba === 'acessos') setTimeout(() => c.querySelector('#secAcessos')?.scrollIntoView({ behavior: 'smooth' }), 100);
   }
-}
-
-const NOMES_TABELA = { gf_medicoes: 'medição', gf_previsoes: 'previsão', gf_orcamentos: 'orçamento', gf_contratos: 'contrato', gf_pendencias: 'pendência', gf_empresas: 'empresa' };
-const VERBOS = { insert: 'Cadastrou', update: 'Atualizou', delete: 'Excluiu' };
-const ICONES_TABELA = { gf_medicoes: 'medicao', gf_previsoes: 'previsao', gf_orcamentos: 'orcamento', gf_contratos: 'contrato', gf_pendencias: 'pendencia', gf_empresas: 'empresa' };
-
-async function carregarAtividade(alvo, uid) {
-  const { data, error } = await sb.from('gf_auditoria').select('*').eq('usuario_id', uid).order('created_at', { ascending: false }).limit(20);
-  if (!alvo.isConnected) return;
-  if (error) { alvo.innerHTML = `<p class="muted small">${esc(erroAmigavel(error))}</p>`; return; }
-  if (!data.length) { alvo.innerHTML = vazioHTML('Nenhuma alteração registrada ainda.', 'relogio'); return; }
-  alvo.innerHTML = data.map((a) => {
-    const d = a.dados || {};
-    const emp = empresaPorId(a.empresa_id)?.nome;
-    let det = '';
-    if (d.mes && d.ano && d.valor !== undefined) det = `${competencia(d.ano, d.mes)} · ${fmtBRL(d.valor)}${d.tipo ? ` · ${d.tipo}` : ''}`;
-    else if (d.titulo) det = d.titulo;
-    else if (d.nome) det = d.nome;
-    const cls = a.acao === 'delete' ? 'erro' : a.acao === 'insert' ? 'ok' : 'info';
-    return `<div class="lista-item"><span class="lista-icone ${cls}">${icone(ICONES_TABELA[a.tabela] || 'info', 'icon-sm')}</span><div class="lista-texto"><strong>${VERBOS[a.acao] || a.acao} ${NOMES_TABELA[a.tabela] || a.tabela}${emp ? ` — ${esc(emp)}` : ''}</strong><span>${esc(det)}</span></div><span class="muted small nowrap" title="${fmtDataHora(a.created_at)}">${tempoRelativo(a.created_at)}</span></div>`;
-  }).join('');
 }
 
 async function carregarAcessos(alvo) {
@@ -135,6 +111,7 @@ async function carregarAcessos(alvo) {
     sb.from('gf_perfis').select('id,email,nome,ultimo_acesso,created_at'),
   ]);
   if (!alvo.isConnected) return;
+  if (perfis.error) { alvo.textContent = erroAmigavel(perfis.error); return; }
   if (acessos.error) { alvo.innerHTML = `<p class="muted small" style="padding:16px">${esc(erroAmigavel(acessos.error))}</p>`; return; }
   const porEmail = new Map((perfis.data || []).map((x) => [x.email, x]));
   const meuEmail = store.perfil?.email;
@@ -162,7 +139,7 @@ function formAcesso(pagina, atual = null) {
   formulario({
     titulo: atual ? 'Editar acesso' : 'Liberar novo acesso',
     subtitulo: atual ? atual.email : 'A pessoa receberá acesso ao entrar em "Primeiro acesso" com este e-mail.',
-    valores: atual || { papel: 'editor', ativo: 'true' },
+    valores: atual || { papel: 'leitor', ativo: 'true' },
     campos: [
       ...(atual ? [] : [{ nome: 'email', rotulo: 'E-mail', tipo: 'email', obrigatorio: true, largura: 2 }]),
       { nome: 'nome', rotulo: 'Nome' },
