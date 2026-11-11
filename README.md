@@ -39,6 +39,8 @@ O **Coordenador** mantém a gestão operacional anterior, mas não consulta audi
 
 Aplique `supabase/migrations/20261111231026_gf_editor_auditoria.sql` no mesmo projeto configurado em `js/config.js` antes de usar os novos recursos. O push do site não aplica migrações no Supabase. O primeiro Editor deve ser autorizado por um operador do banco, mantendo dados pessoais de provisionamento fora do repositório.
 
+Implantação verificada em 11/11/2026: migração aplicada ao projeto configurado e primeiro e-mail de Editor autorizado. Testes com transações revertidas confirmaram o bloqueio de auditoria e gestão de acessos para Coordenador, a gestão de acessos para Editor, o registro de eventos e valores antes/depois e a exclusão dos eventos do Editor da consulta. Nenhum cadastro temporário de teste foi mantido. A autorização por e-mail é concluída pela pessoa na tela **Primeiro acesso**, onde ela define sua senha.
+
 - A página Auditoria consulta 200 registros por página, em ordem de data e ID, com filtros de pessoa e ação.
 - Triggers registram inserções, alterações e exclusões nas tabelas de negócio, catálogo, itens, perfis e acessos. Guardam ator, papel no momento da ação, horário do servidor e imagens antes/depois.
 - A interface informa entrada no site, páginas abertas, saída pelo botão, exportação CSV e troca de senha. Esses eventos dependem do navegador e não representam cada clique nem fechamento da aba. Alterações de dados não dependem desses eventos: são auditadas no banco.
