@@ -6,7 +6,7 @@ import { resumo, resumoContrato, alertas, saldoProjetadoMensal } from '../calc.j
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra, sparkline } from '../charts.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone, grafismo } from '../icons.js';
-import { fmtBRL, fmtCompacto, fmtPct, MESES, MESES_LONGOS, esc, soma, acumular, badgeSituacao, vazioHTML, fmtEixo } from '../utils.js';
+import { fmtBRL, fmtPct, MESES, MESES_LONGOS, esc, soma, acumular, badgeSituacao, badgeTipo, vazioHTML, fmtEixo } from '../utils.js';
 
 let filtroTipo = null; // null = total | 'CAPEX' | 'OPEX'
 
@@ -131,9 +131,9 @@ export function render(c) {
       </div>
       <div class="hero-lado">
         <div class="hero-anel ${R.pctConsumido > 1 ? 'estouro' : ''}" style="--p:${anel}"><div><strong>${R.pctConsumido === null ? '—' : fmtPct(R.pctConsumido, 0)}</strong><span>consumido</span></div></div>
-        <div class="hero-num"><small>Realizado ${ano}</small><strong>${fmtCompacto(R.realAno)}</strong></div>
-        <div class="hero-num"><small>Saldo do orçamento</small><strong>${R.orcAnual > 0 ? fmtCompacto(R.saldo) : '—'}</strong></div>
-        <div class="hero-num"><small>Pode gastar / mês</small><strong>${R.orcAnual > 0 && R.restantes > 0 ? fmtCompacto(R.margemMensal) : '—'}</strong></div>
+        <div class="hero-num"><small>Realizado ${ano}</small><strong>${fmtBRL(R.realAno)}</strong></div>
+        <div class="hero-num"><small>Saldo do orçamento</small><strong>${R.orcAnual > 0 ? fmtBRL(R.saldo) : '—'}</strong></div>
+        <div class="hero-num"><small>Pode gastar / mês</small><strong>${R.orcAnual > 0 && R.restantes > 0 ? fmtBRL(R.margemMensal) : '—'}</strong></div>
       </div>
     </section>
 
@@ -141,12 +141,12 @@ export function render(c) {
       <div class="filtros so-edicao" style="margin-left:auto">${podeEditar() ? empresas.map((e) => `<a class="btn btn-secundario btn-sm" href="#/empresa/${e.slug}/registros/orcamento">${esc(e.nome)}</a>`).join('') : ''}</div></div>` : ''}
 
     <div class="kpis">
-      ${kpi({ rotulo: `Orçamento ${ano}`, valor: fmtCompacto(R.orcAnual), icone: 'orcamento', detalhe: filtroTipo ? `${filtroTipo}` : `CAPEX ${fmtCompacto(Rcapex.orcAnual)} · OPEX ${fmtCompacto(Ropex.orcAnual)}` })}
-      ${kpi({ rotulo: 'Realizado no ano', valor: fmtCompacto(R.realAno), icone: 'medicao', cor: 'verde', barra: R.pctConsumido, barraClasse: classeBarra(R.pctConsumido), detalhe: R.pctConsumido === null ? 'sem orçamento para comparar' : `${fmtPct(R.pctConsumido)} do orçamento` })}
-      ${kpi({ rotulo: 'Saldo disponível', valor: R.orcAnual > 0 ? fmtCompacto(R.saldo) : '—', icone: 'carteira', cor: 'azul-claro', detalhe: R.orcAnual > 0 ? `para ${R.restantes} ${R.restantes === 1 ? 'mês' : 'meses'} (${mesesRest.join(', ') || '—'})` : 'cadastre o orçamento' })}
-      ${kpi({ rotulo: 'Margem mensal segura', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtCompacto(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: 'quanto pode gastar por mês sem estourar' })}
-      ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtCompacto(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}${R.pctProjetado !== null ? ` ${fmtPct(R.pctProjetado)} do orçamento` : ''}` })}
-      ${kpi({ rotulo: 'Ritmo atual', valor: fmtCompacto(R.ritmo), icone: 'relogio', detalhe: `média/mês dos últimos 3 meses · forecast ${fmtCompacto(soma(R.prev.slice(R.fechados)))} a realizar` })}
+      ${kpi({ rotulo: `Orçamento ${ano}`, valor: fmtBRL(R.orcAnual), icone: 'orcamento', detalhe: filtroTipo ? `${filtroTipo}` : `CAPEX ${fmtBRL(Rcapex.orcAnual)} · OPEX ${fmtBRL(Ropex.orcAnual)}` })}
+      ${kpi({ rotulo: 'Realizado no ano', valor: fmtBRL(R.realAno), icone: 'medicao', cor: 'verde', barra: R.pctConsumido, barraClasse: classeBarra(R.pctConsumido), detalhe: R.pctConsumido === null ? 'sem orçamento para comparar' : `${fmtPct(R.pctConsumido)} do orçamento` })}
+      ${kpi({ rotulo: 'Saldo disponível', valor: R.orcAnual > 0 ? fmtBRL(R.saldo) : '—', icone: 'carteira', cor: 'azul-claro', detalhe: R.orcAnual > 0 ? `para ${R.restantes} ${R.restantes === 1 ? 'mês' : 'meses'} (${mesesRest.join(', ') || '—'})` : 'cadastre o orçamento' })}
+      ${kpi({ rotulo: 'Margem mensal segura', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtBRL(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: 'quanto pode gastar por mês sem estourar' })}
+      ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtBRL(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}${R.pctProjetado !== null ? ` ${fmtPct(R.pctProjetado)} do orçamento` : ''}` })}
+      ${kpi({ rotulo: 'Ritmo atual', valor: fmtBRL(R.ritmo), icone: 'relogio', detalhe: `média/mês dos últimos 3 meses · forecast ${fmtBRL(soma(R.prev.slice(R.fechados)))} a realizar` })}
     </div>
 
     <div class="grade g-2-1">
@@ -157,8 +157,8 @@ export function render(c) {
           ${R.orcAnual > 0 ? '<div id="gGauge" class="grafico grafico-sm"></div>' : vazioHTML('Cadastre o orçamento para ver o consumo.', 'orcamento')}
           <div class="lista" style="margin-top:6px">
             <div class="lista-item"><div class="lista-texto"><strong>Esperado até ${R.fechados ? MESES_LONGOS[R.fechados - 1] : '—'}</strong><span>parcela do orçamento já programada</span></div><b class="num">${fmtPct(R.pctEsperado)}</b></div>
-            <div class="lista-item"><div class="lista-texto"><strong>Desvio até o mês</strong><span>realizado − orçado (meses fechados)</span></div><b class="num" style="color:${R.desvioAteMes > 0 ? 'var(--c-erro)' : 'var(--c-sucesso)'}">${R.orcAnual > 0 ? fmtCompacto(R.desvioAteMes) : '—'}</b></div>
-            <div class="lista-item"><div class="lista-texto"><strong>Estouro previsto</strong><span>projeção − orçamento</span></div><b class="num">${R.orcAnual > 0 ? (R.estouroPrevisto > 0 ? fmtCompacto(R.estouroPrevisto) : 'Nenhum') : '—'}</b></div>
+            <div class="lista-item"><div class="lista-texto"><strong>Desvio até o mês</strong><span>realizado − orçado (meses fechados)</span></div><b class="num" style="color:${R.desvioAteMes > 0 ? 'var(--c-erro)' : 'var(--c-sucesso)'}">${R.orcAnual > 0 ? fmtBRL(R.desvioAteMes) : '—'}</b></div>
+            <div class="lista-item"><div class="lista-texto"><strong>Estouro previsto</strong><span>projeção − orçamento</span></div><b class="num">${R.orcAnual > 0 ? (R.estouroPrevisto > 0 ? fmtBRL(R.estouroPrevisto) : 'Nenhum') : '—'}</b></div>
           </div>
         </div>
       </section>
@@ -171,13 +171,11 @@ export function render(c) {
       <div class="card-corpo sem-padding tabela-wrap">${tabelaMargens(linhas)}</div>
     </section>
 
-    <div class="grade g-2">
-      ${cartaoGrafico({ id: 'gProjEmp', titulo: 'Projeção de gasto mês a mês até dezembro', sub: `Por empresa${esc(rotuloTipo())} · forecast ou ritmo atual`, tabela: tabelaProjEmpresas(linhas, R) })}
-      <section class="card">
-        <div class="card-cab"><div><h3>Saldo projetado mês a mês</h3><div class="sub">Se o ritmo/forecast se confirmar${esc(rotuloTipo())}</div></div></div>
-        <div class="card-corpo sem-padding tabela-wrap">${tabelaSaldoProjetado(R)}</div>
-      </section>
-    </div>
+    ${cartaoGrafico({ id: 'gProjEmp', titulo: 'Projeção de gasto mês a mês até dezembro', sub: `Por empresa${esc(rotuloTipo())} · forecast ou ritmo atual`, tabela: tabelaProjEmpresas(linhas, R) })}
+    <section class="card">
+      <div class="card-cab"><div><h3>Saldo projetado mês a mês</h3><div class="sub">Se o ritmo/forecast se confirmar${esc(rotuloTipo())}</div></div></div>
+      <div class="card-corpo sem-padding tabela-wrap">${tabelaSaldoProjetado(R)}</div>
+    </section>
 
     <div class="grade g-3">
       ${cartaoGrafico({ id: 'gDonutEmp', titulo: 'Realizado por empresa', sub: `${ano}${esc(rotuloTipo())}`, alturaClasse: 'grafico-sm', tabela: { colunas: [{ rotulo: 'Empresa' }, { rotulo: 'Realizado', num: true }, { rotulo: '%', num: true }], linhas: linhas.map((l) => [esc(l.e.nome), fmtBRL(l.r.realAno), fmtPct(R.realAno ? l.r.realAno / R.realAno : null)]) } })}
@@ -232,9 +230,9 @@ export function render(c) {
     tooltip: tooltipItem(),
     legend: { type: 'scroll', bottom: 0, top: 'auto', left: 'center' },
     series: [{
-      name: 'Realizado', type: 'pie', radius: ['52%', '80%'], center: ['50%', '45%'], padAngle: 1,
+      name: 'Realizado', type: 'pie', radius: ['63%', '86%'], center: ['50%', '45%'], padAngle: 1,
       itemStyle: { borderColor: p.superficie, borderWidth: 2, borderRadius: 4 },
-      label: { show: true, position: 'center', formatter: () => `{a|${fmtCompacto(R.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 16, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
+      label: { show: true, position: 'center', formatter: () => `{a|${fmtBRL(R.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 12.5, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
       emphasis: { scale: true, scaleSize: 6 },
       data: linhas.filter((l) => l.r.realAno > 0).map((l) => ({ name: l.e.nome, value: Math.round(l.r.realAno), itemStyle: { color: corEmpresa(l.e) } })),
     }],
@@ -243,9 +241,9 @@ export function render(c) {
     tooltip: tooltipItem(),
     legend: { bottom: 0, top: 'auto', left: 'center' },
     series: [{
-      name: 'Realizado', type: 'pie', radius: ['52%', '80%'], center: ['50%', '46%'], padAngle: 1,
+      name: 'Realizado', type: 'pie', radius: ['63%', '86%'], center: ['50%', '46%'], padAngle: 1,
       itemStyle: { borderColor: p.superficie, borderWidth: 2, borderRadius: 4 },
-      label: { show: true, position: 'center', formatter: () => `{a|${fmtCompacto(Rcapex.realAno + Ropex.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 16, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
+      label: { show: true, position: 'center', formatter: () => `{a|${fmtBRL(Rcapex.realAno + Ropex.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 12.5, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
       data: [
         { name: 'CAPEX', value: Math.round(Rcapex.realAno), itemStyle: { color: p.capex } },
         { name: 'OPEX', value: Math.round(Ropex.realAno), itemStyle: { color: p.opex } },
@@ -315,27 +313,21 @@ function tabelaMensal(R, acumulado = false) {
 }
 
 function celulasMargem(r) {
-  if (r.orcAnual === 0 && r.realAno === 0) return '<td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td>';
+  if (r.orcAnual === 0 && r.realAno === 0) return '<td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td><td class="muted">—</td>';
   const saldoCor = r.saldo < 0 ? 'color:var(--c-erro)' : '';
-  return `<td class="num">${fmtCompacto(r.orcAnual)}</td><td class="num">${fmtCompacto(r.realAno)}</td><td class="num" style="${saldoCor}">${r.orcAnual > 0 ? fmtCompacto(r.saldo) : '—'}</td><td class="num forte">${r.orcAnual > 0 && r.restantes > 0 ? fmtCompacto(r.margemMensal) : '—'}</td>`;
+  return `<td class="num">${fmtBRL(r.orcAnual)}</td><td class="num">${fmtBRL(r.realAno)}</td><td class="num" style="${saldoCor}">${r.orcAnual > 0 ? fmtBRL(r.saldo) : '—'}</td><td class="num forte">${r.orcAnual > 0 && r.restantes > 0 ? fmtBRL(r.margemMensal) : '—'}</td><td>${badgeSituacao(r.situacao, true)}</td>`;
 }
 
 function tabelaMargens(linhas) {
   if (!linhas.length) return vazioHTML('Nenhuma empresa cadastrada.');
-  const tot = { capex: resumo({ ano: store.ano, tipo: 'CAPEX' }), opex: resumo({ ano: store.ano, tipo: 'OPEX' }), geral: resumo({ ano: store.ano }) };
+  const tot = { CAPEX: resumo({ ano: store.ano, tipo: 'CAPEX' }), OPEX: resumo({ ano: store.ano, tipo: 'OPEX' }) };
+  const linhaEmpresa = (l) => ['CAPEX', 'OPEX'].map((t, i) => `<tr>
+      ${i === 0 ? `<td rowspan="2" style="vertical-align:top"><a class="forte" href="#/empresa/${l.e.slug}/dashboard" style="display:flex;align-items:center;gap:8px"><span class="sb-ponto" style="background:${corEmpresa(l.e)};box-shadow:none"></span>${esc(l.e.nome)}</a></td>` : ''}
+      <td>${badgeTipo(t)}</td>${celulasMargem(t === 'CAPEX' ? l.capex : l.opex)}</tr>`).join('');
   return `<table class="tabela tabela-compacta">
-    <thead>
-      <tr><th rowspan="2">Empresa</th><th colspan="4" style="text-align:center;border-left:1px solid var(--c-borda)">CAPEX</th><th colspan="4" style="text-align:center;border-left:1px solid var(--c-borda)">OPEX</th><th rowspan="2" style="border-left:1px solid var(--c-borda)">Situação</th></tr>
-      <tr><th class="num" style="border-left:1px solid var(--c-borda)">Orçado</th><th class="num">Realizado</th><th class="num">Saldo</th><th class="num">Por mês</th><th class="num" style="border-left:1px solid var(--c-borda)">Orçado</th><th class="num">Realizado</th><th class="num">Saldo</th><th class="num">Por mês</th></tr>
-    </thead>
-    <tbody>${linhas.map((l) => {
-      const geral = resumo({ ano: store.ano, empresaId: l.e.id });
-      return `<tr>
-        <td><a class="forte" href="#/empresa/${l.e.slug}/dashboard" style="display:flex;align-items:center;gap:8px"><span class="sb-ponto" style="background:${corEmpresa(l.e)};box-shadow:none"></span>${esc(l.e.nome)}</a></td>
-        ${celulasMargem(l.capex)}${celulasMargem(l.opex)}
-        <td>${badgeSituacao(geral.situacao, true)}</td></tr>`;
-    }).join('')}</tbody>
-    <tfoot><tr><td>Total</td>${celulasMargem(tot.capex)}${celulasMargem(tot.opex)}<td>${badgeSituacao(tot.geral.situacao, true)}</td></tr></tfoot>
+    <thead><tr><th>Empresa</th><th>Natureza</th><th class="num">Orçado no ano</th><th class="num">Realizado</th><th class="num">Saldo</th><th class="num">Pode gastar por mês</th><th>Situação</th></tr></thead>
+    <tbody>${linhas.map(linhaEmpresa).join('')}</tbody>
+    <tfoot>${['CAPEX', 'OPEX'].map((t, i) => `<tr>${i === 0 ? '<td rowspan="2" style="vertical-align:top">Total</td>' : ''}<td>${badgeTipo(t)}</td>${celulasMargem(tot[t])}</tr>`).join('')}</tfoot>
   </table>`;
 }
 
@@ -346,7 +338,7 @@ function tabelaSaldoProjetado(R) {
   for (let i = R.fechados; i < 12; i++) {
     const s = saldos[i];
     const margem = R.orcAnual > 0 ? Math.max(0, (R.orcAnual - R.realFechado - soma(R.proj.slice(R.fechados, i))) / (12 - i)) : null;
-    linhasHTML += `<tr><td class="forte">${MESES_LONGOS[i]}</td><td class="num">${fmtCompacto(R.orc[i] || null)}</td><td class="num">${fmtCompacto(R.proj[i])}</td><td class="num" style="${s !== null && s < 0 ? 'color:var(--c-erro);font-weight:700' : ''}">${R.orcAnual > 0 ? fmtCompacto(s) : '—'}</td><td class="num forte">${margem === null ? '—' : fmtCompacto(margem)}</td></tr>`;
+    linhasHTML += `<tr><td class="forte">${MESES_LONGOS[i]}</td><td class="num">${fmtBRL(R.orc[i] || null)}</td><td class="num">${fmtBRL(R.proj[i])}</td><td class="num" style="${s !== null && s < 0 ? 'color:var(--c-erro);font-weight:700' : ''}">${R.orcAnual > 0 ? fmtBRL(s) : '—'}</td><td class="num forte">${margem === null ? '—' : fmtBRL(margem)}</td></tr>`;
   }
   return `<table class="tabela tabela-compacta"><thead><tr><th>Mês</th><th class="num">Orçado</th><th class="num">Projeção</th><th class="num">Saldo no fim</th><th class="num">Pode gastar</th></tr></thead><tbody>${linhasHTML}</tbody></table>
   <div class="legenda-nota" style="padding:0 16px 16px">${icone('info', 'icon-sm')}<span>"Pode gastar no mês" redistribui o saldo restante pelos meses que faltam, considerando que a projeção dos meses anteriores se confirme.</span></div>`;
@@ -374,9 +366,9 @@ function cartaoEmpresa(l) {
     <div class="empresa-card-topo"><span class="empresa-sigla chanfro">${esc(e.nome.slice(0, 3).toUpperCase())}</span>
       <div style="min-width:0"><h3>${esc(e.nome)}</h3><div class="muted small" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(e.descricao || e.razao_social || '')}</div></div></div>
     <div class="empresa-metricas">
-      <div><small>Realizado ${store.ano}</small><strong>${fmtCompacto(r.realAno)}</strong></div>
-      <div><small>Pode gastar/mês</small><strong>${r.orcAnual > 0 && r.restantes > 0 ? fmtCompacto(r.margemMensal) : '—'}</strong></div>
-      <div><small>Orçamento</small><strong>${r.orcAnual > 0 ? fmtCompacto(r.orcAnual) : '—'}</strong></div>
+      <div><small>Realizado ${store.ano}</small><strong>${fmtBRL(r.realAno)}</strong></div>
+      <div><small>Pode gastar/mês</small><strong>${r.orcAnual > 0 && r.restantes > 0 ? fmtBRL(r.margemMensal) : '—'}</strong></div>
+      <div><small>Orçamento</small><strong>${r.orcAnual > 0 ? fmtBRL(r.orcAnual) : '—'}</strong></div>
       <div><small>Contratos ativos</small><strong>${nCont}</strong></div>
     </div>
     ${r.orcAnual > 0 ? `<div><div class="progresso"><span class="${classeBarra(r.pctConsumido)}" style="width:${Math.min(100, (r.pctConsumido || 0) * 100)}%"></span></div><div class="progresso-legenda"><span>${fmtPct(r.pctConsumido)} consumido</span><span>${badgeSituacao(r.situacao)}</span></div></div>` : ''}

@@ -6,7 +6,7 @@ import { resumo, resumoContrato, alertas, medicaoConta } from '../calc.js';
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra } from '../charts.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone, grafismo } from '../icons.js';
-import { fmtBRL, fmtCompacto, fmtPct, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO } from '../utils.js';
+import { fmtBRL, fmtPct, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO } from '../utils.js';
 import { kpi, classeBarra, opcaoCurvaAcumulada, opcaoMensal } from './painel.js';
 
 let filtroTipo = null;
@@ -51,9 +51,9 @@ export function render(c, { slug }) {
   const rotTipo = filtroTipo ? ` ${filtroTipo}` : '';
 
   const direita = `<div class="hero-lado">
-    <div class="hero-num"><small>Valor contratado</small><strong>${fmtCompacto(valorContratado)}</strong></div>
-    <div class="hero-num"><small>Medido acumulado</small><strong>${fmtCompacto(medidoTotal)}</strong></div>
-    <div class="hero-num"><small>Saldo contratual</small><strong style="${saldoContratual < 0 ? 'color:#FFB3B3' : ''}">${fmtCompacto(saldoContratual)}</strong></div>
+    <div class="hero-num"><small>Valor contratado</small><strong>${fmtBRL(valorContratado)}</strong></div>
+    <div class="hero-num"><small>Medido acumulado</small><strong>${fmtBRL(medidoTotal)}</strong></div>
+    <div class="hero-num"><small>Saldo contratual</small><strong style="${saldoContratual < 0 ? 'color:#FFB3B3' : ''}">${fmtBRL(saldoContratual)}</strong></div>
     <div class="segmentado" role="group" aria-label="Filtrar CAPEX/OPEX">${[[null, 'Total'], ['CAPEX', 'CAPEX'], ['OPEX', 'OPEX']].map(([v, t]) => `<button data-tipo="${v || ''}" class="${filtroTipo === v ? 'ativo' : ''}">${t}</button>`).join('')}</div>
   </div>`;
 
@@ -63,12 +63,12 @@ export function render(c, { slug }) {
     ${listaAlertas.filter((a) => a.nivel === 'erro').slice(0, 2).map((a) => `<a class="aviso alerta" href="${a.link}" style="text-decoration:none">${icone(a.icone)}<div><strong>${esc(a.titulo)}</strong><br>${esc(a.detalhe)}</div></a>`).join('')}
 
     <div class="kpis">
-      ${kpi({ rotulo: `Orçamento ${ano}${rotTipo}`, valor: R.orcAnual > 0 ? fmtCompacto(R.orcAnual) : '—', icone: 'orcamento', detalhe: filtroTipo ? 'orçamento programado' : `CAPEX ${fmtCompacto(Rc.orcAnual)} · OPEX ${fmtCompacto(Ro.orcAnual)}` })}
-      ${kpi({ rotulo: `Realizado ${ano}`, valor: fmtCompacto(R.realAno), icone: 'medicao', cor: 'verde', barra: R.pctConsumido, barraClasse: classeBarra(R.pctConsumido), detalhe: R.pctConsumido === null ? `${meds.filter(medicaoConta).length} medições no ano` : `${fmtPct(R.pctConsumido)} do orçamento` })}
-      ${kpi({ rotulo: 'Previsto (forecast)', valor: fmtCompacto(R.prevAnual), icone: 'previsao', cor: 'azul-claro', detalhe: `${fmtCompacto(soma(R.prev.slice(R.fechados)))} nos meses abertos` })}
-      ${kpi({ rotulo: 'Saldo do orçamento', valor: R.orcAnual > 0 ? fmtCompacto(R.saldo) : '—', icone: 'carteira', detalhe: R.orcAnual > 0 ? `${R.restantes} ${R.restantes === 1 ? 'mês restante' : 'meses restantes'}` : 'cadastre em Registros → Orçamento' })}
-      ${kpi({ rotulo: 'Pode gastar por mês', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtCompacto(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: filtroTipo ? `margem ${filtroTipo}` : `CAPEX ${Rc.orcAnual > 0 ? fmtCompacto(Rc.margemMensal) : '—'} · OPEX ${Ro.orcAnual > 0 ? fmtCompacto(Ro.margemMensal) : '—'}` })}
-      ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtCompacto(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}` })}
+      ${kpi({ rotulo: `Orçamento ${ano}${rotTipo}`, valor: R.orcAnual > 0 ? fmtBRL(R.orcAnual) : '—', icone: 'orcamento', detalhe: filtroTipo ? 'orçamento programado' : `CAPEX ${fmtBRL(Rc.orcAnual)} · OPEX ${fmtBRL(Ro.orcAnual)}` })}
+      ${kpi({ rotulo: `Realizado ${ano}`, valor: fmtBRL(R.realAno), icone: 'medicao', cor: 'verde', barra: R.pctConsumido, barraClasse: classeBarra(R.pctConsumido), detalhe: R.pctConsumido === null ? `${meds.filter(medicaoConta).length} medições no ano` : `${fmtPct(R.pctConsumido)} do orçamento` })}
+      ${kpi({ rotulo: 'Previsto (forecast)', valor: fmtBRL(R.prevAnual), icone: 'previsao', cor: 'azul-claro', detalhe: `${fmtBRL(soma(R.prev.slice(R.fechados)))} nos meses abertos` })}
+      ${kpi({ rotulo: 'Saldo do orçamento', valor: R.orcAnual > 0 ? fmtBRL(R.saldo) : '—', icone: 'carteira', detalhe: R.orcAnual > 0 ? `${R.restantes} ${R.restantes === 1 ? 'mês restante' : 'meses restantes'}` : 'cadastre em Registros → Orçamento' })}
+      ${kpi({ rotulo: 'Pode gastar por mês', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtBRL(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: filtroTipo ? `margem ${filtroTipo}` : `CAPEX ${Rc.orcAnual > 0 ? fmtBRL(Rc.margemMensal) : '—'} · OPEX ${Ro.orcAnual > 0 ? fmtBRL(Ro.margemMensal) : '—'}` })}
+      ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtBRL(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}` })}
     </div>
 
     <div class="grade g-2">
@@ -92,7 +92,7 @@ export function render(c, { slug }) {
       <section class="card">
         <div class="card-cab"><div><h3>Pendências em aberto</h3><div class="sub">${pend.length} item(ns)</div></div>
           <div class="card-acoes so-edicao"><a class="btn btn-secundario btn-sm" href="#/empresa/${e.slug}/registros/pendencias">${icone('lista', 'icon-sm')}Ver todas</a></div></div>
-        <div class="card-corpo"><div class="lista rolavel" style="max-height:260px">${pend.length ? pend.map((x) => `<div class="lista-item"><span class="lista-icone ${x.prioridade === 'Alta' ? 'erro' : x.prioridade === 'Média' ? 'alerta' : 'info'}">${icone('pendencia', 'icon-sm')}</span><div class="lista-texto"><strong>${esc(x.titulo)}</strong><span>${esc([x.responsavel, x.prazo ? `prazo ${fmtData(x.prazo)}` : null, x.descricao].filter(Boolean).join(' · '))}</span></div><div style="text-align:right">${x.valor ? `<b class="num" style="display:block">${fmtCompacto(x.valor)}</b>` : ''}${badgePrioridade(x.prioridade)}</div></div>`).join('') : vazioHTML('Sem pendências em aberto.', 'check')}</div></div>
+        <div class="card-corpo"><div class="lista rolavel" style="max-height:260px">${pend.length ? pend.map((x) => `<div class="lista-item"><span class="lista-icone ${x.prioridade === 'Alta' ? 'erro' : x.prioridade === 'Média' ? 'alerta' : 'info'}">${icone('pendencia', 'icon-sm')}</span><div class="lista-texto"><strong>${esc(x.titulo)}</strong><span>${esc([x.responsavel, x.prazo ? `prazo ${fmtData(x.prazo)}` : null, x.descricao].filter(Boolean).join(' · '))}</span></div><div style="text-align:right">${x.valor ? `<b class="num" style="display:block">${fmtBRL(x.valor)}</b>` : ''}${badgePrioridade(x.prioridade)}</div></div>`).join('') : vazioHTML('Sem pendências em aberto.', 'check')}</div></div>
       </section>
     </div>
 
@@ -128,9 +128,9 @@ export function render(c, { slug }) {
     tooltip: tooltipItem(),
     legend: { bottom: 0, top: 'auto', left: 'center' },
     series: [{
-      name: 'Realizado', type: 'pie', radius: ['52%', '80%'], center: ['50%', '46%'], padAngle: 1,
+      name: 'Realizado', type: 'pie', radius: ['63%', '86%'], center: ['50%', '46%'], padAngle: 1,
       itemStyle: { borderColor: p.superficie, borderWidth: 2, borderRadius: 4 },
-      label: { show: true, position: 'center', formatter: () => `{a|${fmtCompacto(Rc.realAno + Ro.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 16, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
+      label: { show: true, position: 'center', formatter: () => `{a|${fmtBRL(Rc.realAno + Ro.realAno)}}\n{b|realizado}`, rich: { a: { fontSize: 12.5, fontWeight: 700, color: p.titulo }, b: { fontSize: 11, color: p.suave, padding: [4, 0, 0, 0] } } },
       data: [{ name: 'CAPEX', value: Math.round(Rc.realAno), itemStyle: { color: p.capex } }, { name: 'OPEX', value: Math.round(Ro.realAno), itemStyle: { color: p.opex } }],
     }],
   });
@@ -141,10 +141,10 @@ export function render(c, { slug }) {
     grafico('eStatus', {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (ps) => { const x = porStatus[ps[0].dataIndex]; return `<div class="tt-titulo">${esc(x.s)}</div><div class="tt-linha"><span>Valor</span><b>${fmtBRL(x.v)}</b></div><div class="tt-linha"><span>Quantidade</span><b>${x.n}</b></div>`; } },
       legend: { show: false },
-      grid: { left: 6, right: 70, top: 10, bottom: 4, containLabel: true },
+      grid: { left: 6, right: 170, top: 10, bottom: 4, containLabel: true },
       xAxis: eixoValor(),
       yAxis: { type: 'category', data: porStatus.map((x) => x.s), axisTick: { show: false }, axisLine: { lineStyle: { color: p.grade } }, axisLabel: { color: p.texto } },
-      series: [{ name: 'Valor', type: 'bar', barMaxWidth: 18, data: porStatus.map((x) => ({ value: Math.round(x.v), itemStyle: { color: corStatus[x.s], ...pontaBarra(true) } })), label: { show: true, position: 'right', color: p.texto, fontSize: 11, formatter: (q) => `${porStatus[q.dataIndex].n} · ${fmtCompacto(q.value)}` } }],
+      series: [{ name: 'Valor', type: 'bar', barMaxWidth: 18, data: porStatus.map((x) => ({ value: Math.round(x.v), itemStyle: { color: corStatus[x.s], ...pontaBarra(true) } })), label: { show: true, position: 'right', color: p.texto, fontSize: 11, formatter: (q) => `${porStatus[q.dataIndex].n} · ${fmtBRL(q.value)}` } }],
     });
   } else {
     document.getElementById('eStatus').innerHTML = vazioHTML('Nenhuma medição no ano.', 'medicao');
@@ -157,14 +157,14 @@ function cartaoContrato({ ct, r }) {
     <div class="contrato-cab"><div style="min-width:0"><h3>${esc(ct.titulo)}</h3><div class="muted small">SAP ${esc(ct.contrato_sap || '—')}${ct.contrato_ariba ? ` · Ariba ${esc(ct.contrato_ariba)}` : ''}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${badgeTipo(ct.tipo)}${badgeStatusContrato(ct.status)}</div></div>
     <div><div class="progresso"><span class="${r.nivel === 'erro' ? 'erro' : r.nivel === 'alerta' ? 'alerta' : ''}" style="width:${Math.min(100, pct * 100)}%"></span></div>
-      <div class="progresso-legenda"><span>${fmtPct(r.pct)} medido</span><span>${fmtCompacto(r.medido)} de ${fmtCompacto(r.valor)}</span></div></div>
+      <div class="progresso-legenda"><span>${fmtPct(r.pct)} medido</span><span>${fmtBRL(r.medido)} de ${fmtBRL(r.valor)}</span></div></div>
     <div class="contrato-meta">
       <div><span>Saldo contratual</span><b style="${r.saldo < 0 ? 'color:var(--c-erro)' : ''}">${fmtBRL(r.saldo)}</b></div>
       <div><span>Saldo SAP${ct.saldo_sap_data ? ` (${fmtData(ct.saldo_sap_data)})` : ''}</span><b>${fmtBRL(ct.saldo_sap)}</b></div>
-      <div><span>Ritmo (média 3 meses)</span><b>${fmtCompacto(r.ritmo)}</b></div>
+      <div><span>Ritmo (média 3 meses)</span><b>${fmtBRL(r.ritmo)}</b></div>
       <div><span>Cobertura do saldo</span><b>${r.cobertura === null ? '—' : r.cobertura < 0 ? 'esgotado' : `${r.cobertura.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} meses`}</b></div>
       <div><span>PEP</span><b title="${esc(ct.pep || '')}">${esc(ct.pep || '—')}</b></div>
-      <div><span>Previsto a realizar</span><b>${fmtCompacto(r.previstoFuturo)}</b></div>
+      <div><span>Previsto a realizar</span><b>${fmtBRL(r.previstoFuturo)}</b></div>
     </div>
   </article>`;
 }

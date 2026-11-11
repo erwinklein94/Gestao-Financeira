@@ -8,7 +8,7 @@ import { resumo, resumoContrato, mesesFechados, medicaoConta } from '../calc.js'
 import { definirTitulo } from '../ui/shell.js';
 import { icone } from '../icons.js';
 import {
-  fmtBRL, fmtCompacto, fmtPct, fmtData, fmtNum2, parseValor, esc, soma, MESES, MESES_LONGOS, TIPOS, STATUS_MEDICAO, STATUS_CONTRATO,
+  fmtBRL, fmtPct, fmtData, fmtNum2, parseValor, esc, soma, MESES, MESES_LONGOS, TIPOS, STATUS_MEDICAO, STATUS_CONTRATO,
   STATUS_PENDENCIA, PRIORIDADES, badgeTipo, badgeStatusMedicao, badgeStatusContrato, badgePrioridade, badgePendencia, vazioHTML,
   formulario, confirmar, toast, erroAmigavel, baixarCSV, debounce, competencia, modal, ligarMascaraMoeda, lerCampos,
 } from '../utils.js';
@@ -295,7 +295,7 @@ function abaPrevisoes(alvo, e) {
             const p = mapa.get(`${ct.id}|${i + 1}`);
             const v = p ? fmtNum2(p.valor) : '';
             const r = realPor(ct.id, i + 1);
-            return `<td class="${i < fechados ? 'mes-fechado' : ''}"><input data-cel="${ct.id}|${i + 1}" data-orig="${v}" value="${v}" inputmode="decimal" ${editavel ? '' : 'disabled'} aria-label="${esc(ct.titulo)} ${MESES_LONGOS[i]}" title="${p?.observacao ? esc(p.observacao) : ''}"><span class="ref">${r ? `real ${fmtCompacto(r)}` : '&nbsp;'}</span></td>`;
+            return `<td class="${i < fechados ? 'mes-fechado' : ''}"><input data-cel="${ct.id}|${i + 1}" data-orig="${v}" value="${v}" inputmode="decimal" ${editavel ? '' : 'disabled'} aria-label="${esc(ct.titulo)} ${MESES_LONGOS[i]}" title="${p?.observacao ? esc(p.observacao) : ''}"><span class="ref">${r ? `real ${fmtBRL(r)}` : '&nbsp;'}</span></td>`;
           }).join('')}<td class="total" data-total-linha="${ct.id}"></td></tr>`).join('')}</tbody>
         <tfoot><tr><td>Total do mês</td>${MESES.map((_, i) => `<td class="num" data-total-col="${i + 1}"></td>`).join('')}<td class="total" data-total-geral></td></tr></tfoot>
       </table></div>
@@ -370,15 +370,15 @@ function abaOrcamento(alvo, e) {
           const o = mapa.get(`${t}|${i + 1}`);
           const v = o && Number(o.valor) ? fmtNum2(o.valor) : '';
           const r = R[t].real[i];
-          return `<td class="${i < fechados ? 'mes-fechado' : ''}"><input data-cel="${t}|${i + 1}" data-orig="${v}" value="${v}" inputmode="decimal" ${editavel ? '' : 'disabled'} aria-label="${t} ${MESES_LONGOS[i]}"><span class="ref">${r ? `real ${fmtCompacto(r)}` : '&nbsp;'}</span></td>`;
+          return `<td class="${i < fechados ? 'mes-fechado' : ''}"><input data-cel="${t}|${i + 1}" data-orig="${v}" value="${v}" inputmode="decimal" ${editavel ? '' : 'disabled'} aria-label="${t} ${MESES_LONGOS[i]}"><span class="ref">${r ? `real ${fmtBRL(r)}` : '&nbsp;'}</span></td>`;
         }).join('')}<td class="total" data-total-linha="${t}"></td></tr>`).join('')}</tbody>
         <tfoot><tr><td>Total do mês</td>${MESES.map((_, i) => `<td class="num" data-total-col="${i + 1}"></td>`).join('')}<td class="total" data-total-geral></td></tr></tfoot>
       </table></div>
-      <div class="grade g-2" style="margin-top:18px">${TIPOS.map((t) => { const r = R[t]; return `<div class="perfil-dado" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-        <div><small>${t} orçado</small><strong>${fmtCompacto(r.orcAnual)}</strong></div>
-        <div><small>Realizado</small><strong>${fmtCompacto(r.realAno)}</strong></div>
-        <div><small>Saldo</small><strong style="${r.saldo < 0 ? 'color:var(--c-erro)' : ''}">${r.orcAnual ? fmtCompacto(r.saldo) : '—'}</strong></div>
-        <div><small>Pode gastar/mês</small><strong>${r.orcAnual && r.restantes ? fmtCompacto(r.margemMensal) : '—'}</strong></div></div>`; }).join('')}</div>
+      <div class="grade g-2" style="margin-top:18px">${TIPOS.map((t) => { const r = R[t]; return `<div class="perfil-dado" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+        <div><small>${t} orçado</small><strong>${fmtBRL(r.orcAnual)}</strong></div>
+        <div><small>Realizado</small><strong>${fmtBRL(r.realAno)}</strong></div>
+        <div><small>Saldo</small><strong style="${r.saldo < 0 ? 'color:var(--c-erro)' : ''}">${r.orcAnual ? fmtBRL(r.saldo) : '—'}</strong></div>
+        <div><small>Pode gastar/mês</small><strong>${r.orcAnual && r.restantes ? fmtBRL(r.margemMensal) : '—'}</strong></div></div>`; }).join('')}</div>
     </div>`;
 
   ligarGrade(alvo, () => totaisGrade(alvo));

@@ -294,8 +294,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .abas .contador { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: var(--c-superficie-3); color: var(--c-texto); }
 
 /* ---------- KPIs ---------- */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(158px, 1fr)); gap: 16px; }
-.kpi { position: relative; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (min-width: 1760px) { .kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.kpi { position: relative; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; overflow: hidden; container-type: inline-size; }
 .kpi-topo { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .kpi-rotulo { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--c-texto-suave); }
 .kpi-icone { width: 34px; height: 34px; display: grid; place-items: center; color: #fff; background: var(--marca-azul); flex: none; }
@@ -306,7 +307,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :root[data-theme="dark"] .kpi-icone { background: var(--marca-azul-claro); color: var(--marca-azul-noite); }
 :root[data-theme="dark"] .kpi-icone.verde { background: var(--marca-verde-claro); }
 :root[data-theme="dark"] .kpi-icone.laranja { background: var(--marca-laranja); }
-.kpi-valor { font-size: clamp(18px, 1.55vw, 23px); white-space: nowrap; font-weight: 700; color: var(--c-titulo); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.15; }
+.kpi-valor { font-size: clamp(13px, 8.6cqi, 24px); white-space: nowrap; font-weight: 700; color: var(--c-titulo); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; line-height: 1.15; }
 .kpi-detalhe { font-size: 12px; color: var(--c-texto-suave); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .kpi-barra { height: 6px; border-radius: 999px; background: var(--c-superficie-3); overflow: hidden; margin-top: 4px; }
 .kpi-barra > span { display: block; height: 100%; border-radius: 999px; background: var(--marca-verde); }
@@ -345,12 +346,12 @@ table.tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-s
 .grade-edit th, .grade-edit td { padding: 6px; text-align: right; }
 .grade-edit th:first-child, .grade-edit td:first-child { text-align: left; padding-left: 14px; position: sticky; left: 0; background: var(--c-superficie); z-index: 2; min-width: 210px; }
 .grade-edit thead th:first-child { background: var(--c-superficie-2); }
-.grade-edit input { width: 100%; min-width: 92px; height: 34px; border: 1px solid var(--c-borda); border-radius: 8px; padding: 0 8px; text-align: right; background: var(--c-superficie); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.grade-edit input { width: 100%; min-width: 118px; height: 34px; border: 1px solid var(--c-borda); border-radius: 8px; padding: 0 8px; text-align: right; background: var(--c-superficie); font-variant-numeric: tabular-nums; font-size: 12.5px; }
 .grade-edit input:hover { border-color: var(--c-borda-forte); }
 .grade-edit input:focus { outline: none; border-color: var(--c-acento); box-shadow: 0 0 0 3px var(--c-foco); }
 .grade-edit input.alterado { border-color: var(--marca-laranja); background: rgba(247,131,68,.06); }
 .grade-edit .mes-fechado { background: var(--c-superficie-2); }
-.grade-edit .ref { display: block; font-size: 10.5px; color: var(--c-texto-suave); margin-top: 3px; white-space: nowrap; }
+.grade-edit .ref { display: block; font-size: 10px; color: var(--c-texto-suave); margin-top: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .grade-edit .total { font-weight: 700; color: var(--c-titulo); white-space: nowrap; padding-right: 14px; }
 
 /* ---------- Formulários ---------- */
@@ -422,9 +423,11 @@ table.tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-s
 .empresa-card-topo { display: flex; align-items: center; gap: 12px; }
 .empresa-sigla { width: 40px; height: 40px; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; background: var(--cor, var(--marca-azul)); flex: none; }
 .empresa-card h3 { font-size: 15px; }
-.empresa-metricas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.empresa-metricas small { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--c-texto-suave); }
-.empresa-metricas strong { font-size: 15px; color: var(--c-titulo); font-variant-numeric: tabular-nums; }
+.empresa-metricas { display: flex; flex-direction: column; gap: 0; }
+.empresa-metricas > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 6px 0; border-bottom: 1px dashed var(--c-borda); }
+.empresa-metricas > div:last-child { border-bottom: 0; }
+.empresa-metricas small { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--c-texto-suave); white-space: nowrap; }
+.empresa-metricas strong { font-size: 13.5px; color: var(--c-titulo); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sparkline { height: 46px; width: 100%; }
 .empresa-links { display: flex; gap: 8px; }
 .empresa-links .btn { flex: 1; }
@@ -434,14 +437,14 @@ table.tabela { width: 100%; border-collapse: separate; border-spacing: 0; font-s
 .contrato-card { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
 .contrato-cab { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .contrato-cab h3 { font-size: 14.5px; }
-.contrato-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 12px; }
+.contrato-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 14px; font-size: 12px; }
 .contrato-meta span { color: var(--c-texto-suave); }
-.contrato-meta b { color: var(--c-titulo); font-weight: 700; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.contrato-meta b { color: var(--c-titulo); font-weight: 700; display: block; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .progresso { height: 10px; border-radius: 999px; background: var(--c-superficie-3); overflow: hidden; display: flex; }
 .progresso > span { height: 100%; background: var(--marca-verde); }
 .progresso > span.alerta { background: var(--marca-amarelo); }
 .progresso > span.erro { background: var(--c-erro); }
-.progresso-legenda { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--c-texto-suave); }
+.progresso-legenda { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 2px 10px; font-size: 11.5px; color: var(--c-texto-suave); margin-top: 4px; }
 
 /* Info / avisos */
 .aviso { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; background: var(--c-badge-info-bg); color: var(--c-badge-info-tx); font-size: 13px; }
@@ -548,11 +551,11 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
   .btn-apresentar { width: 38px; padding: 0; }
   .g-4 { grid-template-columns: minmax(0, 1fr); }
   .form-grade { grid-template-columns: minmax(0, 1fr); }
+  .hero-num strong { font-size: 19px; }
   .hero { padding: 22px 20px; }
   .hero h1 { font-size: 22px; }
   .hero-grafismo { display: none; }
-  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .kpi-valor { font-size: 18px; }
+  .kpis { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .contratos-grid { grid-template-columns: minmax(0, 1fr); }
   .apresentacao-barra .ap-info { min-width: 0; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
 }

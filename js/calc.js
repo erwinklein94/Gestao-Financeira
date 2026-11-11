@@ -2,7 +2,7 @@
 // Cálculos financeiros: orçado × previsto × realizado, projeções e margens
 // =====================================================================
 import { store, contratosDaEmpresa, empresaPorId, empresasAtivas } from './state.js';
-import { soma, MESES_LONGOS, fmtBRL, fmtCompacto, fmtPct } from './utils.js';
+import { soma, MESES_LONGOS, fmtBRL, fmtPct } from './utils.js';
 
 export const medicaoConta = (m) => m.status !== 'Cancelada' && m.status !== 'Glosada';
 
@@ -133,7 +133,7 @@ export function alertas(ano = store.ano, empresaId = null) {
       if (r.valor > 0 && r.saldo < 0) {
         lista.push({ nivel: 'erro', icone: 'alerta', titulo: `${e.nome}: medições acima do valor do contrato`, detalhe: `${c.titulo} — excedeu ${fmtBRL(-r.saldo)}`, link });
       } else if (r.pct !== null && r.pct >= 0.9) {
-        lista.push({ nivel: 'erro', icone: 'alerta', titulo: `${e.nome}: contrato com saldo crítico`, detalhe: `${c.titulo} — ${fmtPct(r.pct)} consumido, saldo ${fmtCompacto(r.saldo)}`, link });
+        lista.push({ nivel: 'erro', icone: 'alerta', titulo: `${e.nome}: contrato com saldo crítico`, detalhe: `${c.titulo} — ${fmtPct(r.pct)} consumido, saldo ${fmtBRL(r.saldo)}`, link });
       } else if (r.cobertura !== null && r.cobertura < 2 && r.saldo > 0) {
         lista.push({ nivel: 'alerta', icone: 'relogio', titulo: `${e.nome}: saldo cobre menos de 2 meses`, detalhe: `${c.titulo} — cerca de ${r.cobertura.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mês(es) no ritmo atual`, link });
       }
@@ -144,9 +144,9 @@ export function alertas(ano = store.ano, empresaId = null) {
     for (const tipo of ['CAPEX', 'OPEX']) {
       const r = resumo({ ano, empresaId: e.id, tipo });
       if (r.situacao === 'estouro') {
-        lista.push({ nivel: 'erro', icone: 'tendencia', titulo: `${e.nome}: estouro previsto no ${tipo}`, detalhe: `Projeção ${fmtCompacto(r.projAnual)} para orçamento de ${fmtCompacto(r.orcAnual)} (+${fmtCompacto(r.estouroPrevisto)})`, link: `#/empresa/${e.slug}/dashboard` });
+        lista.push({ nivel: 'erro', icone: 'tendencia', titulo: `${e.nome}: estouro previsto no ${tipo}`, detalhe: `Projeção ${fmtBRL(r.projAnual)} para orçamento de ${fmtBRL(r.orcAnual)} (+${fmtBRL(r.estouroPrevisto)})`, link: `#/empresa/${e.slug}/dashboard` });
       } else if (r.orcAnual === 0 && r.realAno > 0) {
-        lista.push({ nivel: 'info', icone: 'orcamento', titulo: `${e.nome}: ${tipo} sem orçamento cadastrado`, detalhe: `Já há ${fmtCompacto(r.realAno)} realizado em ${ano}.`, link: `#/empresa/${e.slug}/registros/orcamento` });
+        lista.push({ nivel: 'info', icone: 'orcamento', titulo: `${e.nome}: ${tipo} sem orçamento cadastrado`, detalhe: `Já há ${fmtBRL(r.realAno)} realizado em ${ano}.`, link: `#/empresa/${e.slug}/registros/orcamento` });
       }
     }
     const emAprov = store.medicoes.filter((m) => m.empresa_id === e.id && m.ano === ano && m.status === 'Em aprovação');
