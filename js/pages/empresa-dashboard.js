@@ -57,6 +57,23 @@ export function opcaoClassRosca(tot) {
   };
 }
 
+function dadosNatureza(C, natureza) {
+  return C.porCodigo.filter((x) => x.classificacao === natureza && x.valor > 0);
+}
+
+function opcaoPizzaNatureza(C, natureza) {
+  const dados = dadosNatureza(C, natureza);
+  return {
+    tooltip: tooltipItem(),
+    legend: { show: false },
+    series: [{ name: natureza, type: 'pie', radius: ['0%', '65%'], center: ['50%', '48%'],
+      label: { formatter: '{b}: {d}%', overflow: 'truncate', width: 100 },
+      data: dados.map((x) => ({ name: String(x.codigo), value: x.valor })),
+    }],
+    ...(dados.length ? {} : { graphic: { type: 'text', left: 'center', top: 'middle', style: { text: 'Sem gastos nesta natureza', fill: paleta().suave } } }),
+  };
+}
+
 function cartaoNatureza(n, C) {
   const qtdCod = C.porCodigo.filter((x) => x.classificacao === n).length;
   const icones = { CAPEX: ['camadas', ''], OPEX: ['relogio', 'azul-claro'], [SEM_CLASS]: ['alerta', 'amarelo'] };
@@ -91,6 +108,9 @@ function secaoClassificacao(e, C, ano) {
     <div class="grade g-2-1">
       ${cartaoGrafico({ id: 'eClassMes', titulo: 'Natureza do gasto mês a mês', sub: `Realizado ${ano} por classificação contábil`, tabela: { colunas: [{ rotulo: 'Mês' }, ...NATUREZAS.map((n) => ({ rotulo: ROTULO_CURTO[n], num: true })), { rotulo: 'Total', num: true }], linhas: MESES.map((m, i) => [m, ...NATUREZAS.map((n) => fmtBRL(C.porMes[n][i] || null)), fmtBRL(soma(NATUREZAS.map((n) => C.porMes[n][i])) || null)]) } })}
       ${cartaoGrafico({ id: 'eTipo', titulo: 'CAPEX × OPEX × sem classificação', sub: `Participação no realizado ${ano}`, alturaClasse: 'grafico-sm', tabela: { colunas: [{ rotulo: 'Natureza' }, { rotulo: 'Realizado', num: true }, { rotulo: '%', num: true }], linhas: NATUREZAS.map((n) => [n, fmtBRL(C.tot[n]), fmtPct(C.pct[n])]) } })}
+    </div>
+    <div class="grade g-3">
+      ${NATUREZAS.map((n, i) => cartaoGrafico({ id: `eNatureza${i}`, titulo: `Distribuição · ${n}`, sub: 'Participação dos códigos de serviço no total desta natureza', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, { rotulo: 'Valor', num: true }, { rotulo: '% da natureza', num: true }], linhas: dadosNatureza(C, n).map((x) => [esc(x.codigo), esc(x.descricao || ''), fmtBRL(x.valor), fmtPct(x.valor / soma(dadosNatureza(C, n).map((d) => d.valor)))]) } })).join('')}
     </div>
     ${temItens ? `<section class="card"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div><div class="card-corpo sem-padding tabela-wrap">${tabCod}</div></section>` : ''}`;
 }
@@ -230,6 +250,7 @@ export function render(c, { slug }) {
   if (C.total > 0) {
     grafico('eClassMes', opcaoClassMensal(C.porMes));
     grafico('eTipo', opcaoClassRosca(C.tot));
+    NATUREZAS.forEach((n, i) => grafico(`eNatureza${i}`, opcaoPizzaNatureza(C, n)));
   }
   c.querySelector('#clsCsv')?.addEventListener('click', () => baixarCSV(`itens-classificacao-${e.slug}-${ano}.csv`, [
     { rotulo: 'Empresa', valor: () => e.nome }, { rotulo: 'Ano', valor: 'ano' }, { rotulo: 'Mês', valor: 'mes' },

@@ -3,7 +3,7 @@
 // Regras: um eixo de valor por gráfico, cores fixas por entidade,
 // tooltip em todo gráfico, legenda quando há 2+ séries.
 // =====================================================================
-import { MESES, fmtBRL, fmtEixo, fmtPct, esc } from './utils.js';
+import { MESES, fmtBRL, fmtEixo, fmtPct, esc, modal } from './utils.js';
 import { icone } from './icons.js';
 
 const ativos = new Set();
@@ -115,7 +115,43 @@ export function grafico(elOuId, opcao) {
   ro.observe(elemento);
   c.__ro = ro;
   ativos.add(c);
+  const abrir = () => ampliarGrafico(elemento, c);
+  elemento.classList.add('grafico-ampliavel');
+  elemento.tabIndex = 0;
+  elemento.setAttribute('role', 'button');
+  elemento.setAttribute('aria-label', `${elemento.getAttribute('aria-label') || 'Gráfico'}. Ampliar e ver dados`);
+  elemento.onclick = abrir;
+  elemento.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } };
   return c;
+}
+
+function ampliarGrafico(elemento, origem) {
+  const card = elemento.closest('.card');
+  const titulo = card?.querySelector('h3')?.textContent || 'Detalhes do gráfico';
+  const opcao = origem.getOption();
+  const tabela = document.getElementById(`${elemento.id}-tab`)?.querySelector('table');
+  const eixos = [...(opcao.xAxis || []), ...(opcao.yAxis || [])];
+  const categorias = eixos.find((e) => e.type === 'category')?.data || [];
+  const linhas = (opcao.series || []).flatMap((serie) => {
+    const total = (serie.data || []).reduce((acc, d) => acc + (Number(d?.value ?? d) || 0), 0);
+    return (serie.data || []).map((d, i) => {
+      const valor = d?.value ?? d;
+      const nome = d?.name ?? categorias[i]?.value ?? categorias[i] ?? `Item ${i + 1}`;
+      return `<tr><td>${esc(serie.name || 'Valores')}</td><td>${esc(nome)}</td><td class="num">${esc(valor == null ? '—' : typeof valor === 'number' ? valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) : String(valor))}</td><td class="num">${serie.type === 'pie' && total ? fmtPct(Number(valor) / total) : '—'}</td></tr>`;
+    });
+  }).join('');
+  const detalhes = tabela ? tabela.outerHTML : `<table class="tabela tabela-compacta"><thead><tr><th>Série</th><th>Item / período</th><th class="num">Valor</th><th class="num">Participação</th></tr></thead><tbody>${linhas}</tbody></table>`;
+  const m = modal({ titulo, subtitulo: card?.querySelector('.sub')?.textContent || '', classe: 'modal-grafico', corpo: `<div class="grafico grafico-expandido"></div><h3>Dados detalhados</h3><div class="tabela-wrap">${detalhes}</div>` });
+  const ampliado = window.echarts.init(m.corpo.querySelector('.grafico'));
+  ampliado.setOption(opcao);
+  const ro = new ResizeObserver(() => ampliado.resize());
+  ro.observe(m.corpo);
+  const focoAnterior = document.activeElement;
+  m.fundo.querySelector('[data-fechar]').focus();
+  const obs = new MutationObserver(() => {
+    if (!m.fundo.isConnected) { ro.disconnect(); ampliado.dispose(); obs.disconnect(); focoAnterior?.focus(); }
+  });
+  obs.observe(document.body, { childList: true });
 }
 
 export function descartarGraficos() {
