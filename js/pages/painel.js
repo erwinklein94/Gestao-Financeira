@@ -155,6 +155,11 @@ export function render(c) {
       ${kpi({ rotulo: 'Ritmo atual', valor: fmtBRL(R.ritmo), icone: 'relogio', detalhe: `média/mês dos últimos 3 meses · forecast ${fmtBRL(soma(R.prev.slice(R.fechados)))} a realizar` })}
     </div>
 
+    <section>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><h2>Empresas contratadas</h2><span class="muted small">Clique para abrir o dashboard</span></div>
+      <div class="empresas-grid">${linhas.map(cartaoEmpresa).join('')}</div>
+    </section>
+
     <div class="grade g-2-1">
       ${cartaoGrafico({ id: 'gCurva', titulo: 'Curva acumulada do ano', sub: 'Orçado × realizado × projeção até dezembro', tabela: tabelaMensal(R, true), nota: 'Projeção = forecast cadastrado; sem forecast, usa o ritmo médio dos últimos 3 meses fechados.' })}
       <section class="card">
@@ -199,10 +204,7 @@ export function render(c) {
       </section>
     </div>
 
-    <section>
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px"><h2>Empresas contratadas</h2><span class="muted small">Clique para abrir o dashboard</span></div>
-      <div class="empresas-grid">${linhas.map(cartaoEmpresa).join('')}</div>
-    </section>
+
   </div>`;
 
   // ----- interações -----
