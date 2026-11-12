@@ -2,6 +2,7 @@
 // Dashboard da empresa
 // =====================================================================
 import { agruparItens } from '../itens.js';
+import { secaoResumoGastos, ligarResumoGastos, tabelaResumoGastosPDF } from '../resumo-gastos.js';
 import { coletarDashboardPDF, exportarDashboardPDF } from '../dashboard-pdf.js';
 import { store, empresaPorSlug, contratosDaEmpresa } from '../state.js';
 import { resumo, resumoContrato, alertas, medicaoConta, classificacaoGastos } from '../calc.js';
@@ -266,6 +267,8 @@ export function render(c, { slug }) {
 
     ${cartaoGrafico({ id: 'eServicosMensais', titulo: 'Gastos mensais por tipo de serviço', sub: `${ano}${rotTipo} · cada segmento representa um código de serviço · barras empilhadas somam o gasto do mês`, alturaClasse: 'grafico-lg', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, ...MESES.map((m) => ({ rotulo: m, num: true })), { rotulo: 'Total', num: true }], linhas: servicosMensais.map((g) => [esc(g.codigo), esc(g.descricao), ...g.valores.map(fmtBRL), fmtBRL(soma(g.valores))]) } })}
 
+    ${secaoResumoGastos(C.itens, ano, filtroTipo)}
+
     ${secaoListasClassificacao(C, ano)}
 
     <section class="card">
@@ -287,6 +290,7 @@ export function render(c, { slug }) {
   </div>`;
 
   c.querySelectorAll('[data-tipo]').forEach((b) => b.addEventListener('click', () => { filtroTipo = b.dataset.tipo || null; window.dispatchEvent(new Event('gf:rerender')); }));
+  ligarResumoGastos(c, C.itens);
   const buscaItem = c.querySelector('#item-busca');
   const unidadeItem = c.querySelector('#item-unidade');
   if (buscaItem && unidadeItem) {
@@ -423,6 +427,7 @@ export function render(c, { slug }) {
     try {
       const relatorio = coletarDashboardPDF(c, { empresa: e, ano, tipo: filtroTipo, R, rc, pend, porStatus, servicosMensais,
         curvas: [R.orcAnual > 0 ? acumular(R.orc) : Array(12).fill(null), serieRealAcumulada(R), serieProjecaoAcumulada(R)] });
+      relatorio.tabelas.unshift(tabelaResumoGastosPDF(C.itens, filtroTipo));
       await exportarDashboardPDF(relatorio);
       toast('PDF do dashboard exportado.');
     } catch (erro) {

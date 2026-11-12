@@ -132,10 +132,11 @@ function celulaPDF(celula) {
 function desenharTabela(doc, tabela) {
   const larga = tabela.colunas.length >= 7;
   const dividirColunas = tabela.colunas.length > 8;
+  const porGrupo = tabela.colunas[0] === 'Grupo';
   doc.addPage('a4', larga ? 'landscape' : 'portrait');
   const largura = doc.internal.pageSize.getWidth();
   const numerica = (i) => /valor|total|%|quantidade|orçado|realizado|previsto|projeção|aderência|medido|saldo|medições|consumo/i.test(tabela.colunas[i]) || MESES.includes(tabela.colunas[i]);
-  const estilos = Object.fromEntries(tabela.colunas.map((_, i) => [i, { halign: numerica(i) ? 'center' : 'left', ...(dividirColunas ? { cellWidth: i === 1 ? 60 : i === 0 ? 22 : 26 } : numerica(i) ? { minCellWidth: 24 } : {}) }]));
+  const estilos = Object.fromEntries(tabela.colunas.map((_, i) => [i, { halign: numerica(i) ? 'center' : 'left', ...(dividirColunas ? { cellWidth: porGrupo ? (i === 0 ? 60 : 26) : i === 1 ? 60 : i === 0 ? 22 : 26 } : numerica(i) ? { minCellWidth: 24 } : {}) }]));
   const vazio = Array(tabela.colunas.length).fill('');
   vazio[0] = 'Nenhum registro.';
   doc.autoTable({
@@ -145,7 +146,7 @@ function desenharTabela(doc, tabela) {
     styles: { font: 'helvetica', fontSize: 8, cellPadding: 2.4, overflow: 'linebreak', textColor: CINZA, lineColor: [220, 228, 233], valign: 'middle' },
     headStyles: { fillColor: AZUL, textColor: [255, 255, 255], fontSize: 8, fontStyle: 'bold' },
     footStyles: { fillColor: [232, 241, 247], textColor: AZUL }, alternateRowStyles: { fillColor: [246, 249, 251] }, columnStyles: estilos,
-    horizontalPageBreak: dividirColunas, horizontalPageBreakRepeat: dividirColunas ? [0, 1] : undefined,
+    horizontalPageBreak: dividirColunas, horizontalPageBreakRepeat: dividirColunas ? (porGrupo ? [0] : [0, 1]) : undefined,
     didParseCell: ({ cell, column }) => { if (numerica(column.index)) cell.styles.halign = 'center'; },
     willDrawPage: () => { doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...AZUL); doc.text(doc.splitTextToSize(textoPDF(tabela.titulo), largura - 24), 12, 29); },
   });
@@ -166,7 +167,7 @@ export async function gerarDashboardPDF(relatorio) {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(...CINZA);
   const notas = [RESPONSAVEL, relatorio.empresa.descricao, `Ano de referência: ${relatorio.ano}. Natureza selecionada: ${relatorio.tipo || 'Total'}.`,
     'Relatório completo: inclui os indicadores, todos os gráficos, tabelas e detalhes mensais disponíveis no dashboard.',
-    'Os filtros de busca e unidade das listas não limitam a exportação. Os gráficos e cálculos mantêm o ano e a natureza selecionados no dashboard.',
+    'Os filtros locais das tabelas não limitam a exportação. O Resumo de Gastos inclui todos os meses, seguindo a natureza selecionada no cabeçalho do dashboard.',
     'Contratos: valores acumulados de todos os anos. Nos gráficos de serviços, as legendas extensas são identificadas pelo código; as descrições completas estão nas tabelas.',
     relatorio.classificacao, ...relatorio.avisos].filter(Boolean);
   for (const nota of notas) {

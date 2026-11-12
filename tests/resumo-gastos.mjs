@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { grupoDoServico, resumirGastos, tabelaResumoGastosPDF, GRUPO_A_DEFINIR, GRUPO_NAO_ENCONTRADO } from '../js/resumo-gastos.js';
+import { GRUPOS_SERVICOS } from '../js/grupos-servicos.js';
+
+assert.equal(new Set(Object.values(GRUPOS_SERVICOS).flat()).size, 149);
+for (const codigo of ['3001476', '3001908', '3001477', '3004016', '3000186']) assert.equal(grupoDoServico(codigo), GRUPO_A_DEFINIR);
+assert.equal(grupoDoServico(' 3004005.0 '), 'Infra - Limpeza');
+assert.equal(grupoDoServico(3001841), 'Infra - Patrulha');
+assert.equal(grupoDoServico('9999999'), GRUPO_NAO_ENCONTRADO);
+const item = (codigo_servico, mes, valor, classificacao = 'CAPEX') => ({ codigo_servico, mes, valor, classificacao });
+const itens = [item('3004005', 1, 100), item('3004005', 2, 200, 'OPEX'), item('3001476', 1, 30), item('9999999', 2, 40, null), item('3001841', 3, 50), item('3004005', 1, -10), item('3004005', 13, 1000), item('3004005', 2, 'inválido')];
+const geral = resumirGastos(itens);
+assert.deepEqual(geral.meses, [1, 2, 3]);
+assert.deepEqual(geral.totais, [120, 240, 50]);
+assert.equal(geral.total, 410, 'A soma não duplica códigos ambíguos nem perde códigos desconhecidos');
+assert.equal(geral.linhas.find((l) => l.grupo === GRUPO_A_DEFINIR).total, 30);
+assert.equal(resumirGastos(itens, { natureza: 'OPEX' }).total, 200);
+assert.equal(resumirGastos(itens, { natureza: 'Sem classificação' }).total, 40);
+assert.equal(resumirGastos(itens, { natureza: 'CAPEX', meses: [1] }).total, 120);
+assert.equal(resumirGastos(itens, { meses: [] }).total, 0);
+assert.deepEqual(resumirGastos([]).meses, []);
+const pdf = tabelaResumoGastosPDF(itens);
+assert.deepEqual(pdf.colunas, ['Grupo', 'Jan', 'Fev', 'Mar', 'Total']);
+assert.equal(pdf.linhas.length, 14);
+assert.equal(pdf.rodape[0].length, pdf.colunas.length);
+assert.deepEqual(tabelaResumoGastosPDF([]).linhas, []);
+console.log('PASS: 149 códigos, ambiguidade sem duplicação, grupos ausentes, meses, naturezas, créditos, totais e PDF.');

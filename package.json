@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/auditoria.mjs && node tests/perfil.mjs"
+    "test": "node tests/auditoria.mjs && node tests/perfil.mjs && node tests/resumo-gastos.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14"
