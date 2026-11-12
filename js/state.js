@@ -66,6 +66,12 @@ function normalizar(linhas) {
 }
 
 export async function carregarDados() {
+  if (ehEditor()) {
+    Object.keys(TABELAS).forEach((k) => { store[k] = []; });
+    store.carregado = true;
+    emit('dados');
+    return;
+  }
   const chaves = Object.keys(TABELAS);
   const res = await Promise.all(chaves.map((k) => buscarTodos(TABELAS[k].tabela, TABELAS[k].ordem)));
   chaves.forEach((k, i) => { store[k] = normalizar(res[i]); });

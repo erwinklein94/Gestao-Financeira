@@ -1,3 +1,4 @@
+import { ehEditor } from './state.js';
 import { descartarGraficos } from './charts.js';
 import { marcarAtivo } from './ui/shell.js';
 import { esc } from './utils.js';
@@ -31,6 +32,7 @@ export function renderRota({ manterScroll = false } = {}) {
   if (!conteudo) return;
   const hash = location.hash || '#/painel';
   const [caminho, query] = hash.split('?');
+  if (ehEditor() && !['#/auditoria', '#/perfil'].includes(caminho)) { location.replace('#/auditoria'); return; }
   const y = window.scrollY;
   for (const r of ROTAS) {
     const m = caminho.match(r.re);

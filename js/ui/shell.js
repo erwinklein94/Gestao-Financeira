@@ -85,6 +85,10 @@ export function montarShell(raiz, { onSair, onTema }) {
 
   renderNav();
   preencherAnos();
+  if (ehEditor()) {
+    document.querySelector('.tb-ano').style.display = 'none';
+    document.getElementById('tbApresentar').style.display = 'none';
+  }
 
   const app = document.getElementById('appRoot');
   const menuBotao = document.getElementById('tbMenu');
@@ -145,6 +149,14 @@ export function preencherAnos() {
 export function renderNav() {
   const nav = document.getElementById('sbNav');
   if (!nav) return;
+  if (ehEditor()) {
+    nav.innerHTML = `<div class="sb-secao">Administração</div>
+      <a class="sb-link" href="#/auditoria" data-rota="#/auditoria" title="Auditoria">${icone('escudo')}<span class="sb-rotulo">Auditoria</span></a>
+      <a class="sb-link" href="#/perfil" data-rota="#/perfil" title="Meu perfil e acessos">${icone('usuario')}<span class="sb-rotulo">Meu perfil e acessos</span></a>`;
+    nav.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => document.getElementById('appRoot')?.classList.remove('sb-aberta-mobile')));
+    marcarAtivo(location.hash || '#/auditoria');
+    return;
+  }
   let abertos = [];
   try { abertos = JSON.parse(localStorage.getItem('gf-sb-grupos') || '[]'); } catch (e) { /* ignore */ }
   const empresas = empresasAtivas();
@@ -202,7 +214,7 @@ export function definirTitulo(nome, trilha = []) {
   const n = document.getElementById('tbNome');
   const t = document.getElementById('tbTrilha');
   if (n) n.textContent = nome;
-  if (t) t.innerHTML = ['<a href="#/painel">Início</a>', ...trilha.map((x) => (x.href ? `<a href="${x.href}">${esc(x.rotulo)}</a>` : esc(x.rotulo)))].join(' / ');
+  if (t) t.innerHTML = [ehEditor() ? '<a href="#/auditoria">Início</a>' : '<a href="#/painel">Início</a>', ...trilha.map((x) => (x.href ? `<a href="${x.href}">${esc(x.rotulo)}</a>` : esc(x.rotulo)))].join(' / ');
   document.title = `${nome} · ${APP_NOME}`;
 }
 
