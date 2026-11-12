@@ -41,15 +41,21 @@ export function serieRealAcumulada(R) {
 export function opcaoCurvaAcumulada(R) {
   const p = paleta();
   const temOrc = R.orcAnual > 0;
+  const rotulo = (position, color) => ({
+    show: true, position, distance: 10, color, fontSize: 10,
+    backgroundColor: p.superficie, borderRadius: 3, padding: [3, 4],
+    formatter: (x) => x.value == null ? '' : fmtBRL(x.value),
+  });
   return {
+    grid: { left: 30, right: 65, top: 65, bottom: 30, containLabel: true },
     legend: { data: [temOrc ? 'Orçado acumulado' : null, 'Realizado acumulado', 'Projeção'].filter(Boolean) },
     tooltip: tooltipEixo(fmtBRL, 'line'),
     xAxis: eixoMeses({ boundaryGap: false }),
     yAxis: eixoValor(),
     series: [
-      temOrc ? { name: 'Orçado acumulado', type: 'line', data: acumular(R.orc), symbol: 'none', lineStyle: { width: 2, color: p.orcado, type: [6, 4] }, itemStyle: { color: p.orcado } } : null,
-      { name: 'Realizado acumulado', type: 'line', data: serieRealAcumulada(R), symbol: 'circle', symbolSize: 8, lineStyle: { width: 2.5, color: p.realizado }, itemStyle: { color: p.realizado, borderColor: p.superficie, borderWidth: 2 }, areaStyle: { color: p.realizado, opacity: 0.12 } },
-      { name: 'Projeção', type: 'line', data: serieProjecaoAcumulada(R), symbol: 'circle', symbolSize: 8, lineStyle: { width: 2, color: p.projecao, type: 'dashed' }, itemStyle: { color: p.projecao, borderColor: p.superficie, borderWidth: 2 } },
+      temOrc ? { name: 'Orçado acumulado', type: 'line', data: acumular(R.orc), symbol: 'circle', symbolSize: 6, showAllSymbol: true, label: rotulo('bottom', p.orcado), labelLayout: { moveOverlap: 'shiftY' }, lineStyle: { width: 2, color: p.orcado, type: [6, 4] }, itemStyle: { color: p.orcado } } : null,
+      { name: 'Realizado acumulado', type: 'line', data: serieRealAcumulada(R), symbol: 'circle', symbolSize: 8, showAllSymbol: true, label: rotulo('top', p.realizado), labelLayout: { moveOverlap: 'shiftY' }, lineStyle: { width: 2.5, color: p.realizado }, itemStyle: { color: p.realizado, borderColor: p.superficie, borderWidth: 2 }, areaStyle: { color: p.realizado, opacity: 0.12 } },
+      { name: 'Projeção', type: 'line', data: serieProjecaoAcumulada(R), symbol: 'circle', symbolSize: 8, showAllSymbol: true, label: rotulo('bottom', p.projecao), labelLayout: { moveOverlap: 'shiftY' }, lineStyle: { width: 2, color: p.projecao, type: 'dashed' }, itemStyle: { color: p.projecao, borderColor: p.superficie, borderWidth: 2 } },
     ].filter(Boolean),
   };
 }
