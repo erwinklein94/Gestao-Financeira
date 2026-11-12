@@ -144,12 +144,31 @@ function ampliarGrafico(elemento, origem) {
   const m = modal({ titulo, subtitulo: card?.querySelector('.sub')?.textContent || '', classe: 'modal-grafico', corpo: `<div class="grafico grafico-expandido"></div><h3>Dados detalhados</h3><div class="tabela-wrap">${detalhes}</div>` });
   const ampliado = window.echarts.init(m.corpo.querySelector('.grafico'));
   ampliado.setOption(opcao);
+  let limparDetalhe = () => {};
+  if (opcao.tooltip?.[0]?.className === 'servicos-tooltip-fixo') {
+    const painel = document.createElement('div');
+    painel.className = 'servicos-detalhe-fixo';
+    painel.hidden = true;
+    painel.setAttribute('role', 'region');
+    painel.setAttribute('aria-label', 'Gastos do mês selecionado');
+    m.corpo.querySelector('.grafico').after(painel);
+    const fecharDetalhe = (e) => { if (!painel.contains(e.target)) painel.hidden = true; };
+    document.addEventListener('click', fecharDetalhe);
+    ampliado.on('click', (evento) => {
+      if (evento.componentType !== 'series') return;
+      evento.event?.event?.stopPropagation();
+      const dados = (opcao.series || []).map((serie) => ({ nome: serie.name, valor: serie.data[evento.dataIndex]?.value ?? serie.data[evento.dataIndex] })).filter((d) => d.valor != null && d.valor !== 0);
+      painel.innerHTML = `<h3>${esc(categorias[evento.dataIndex] || evento.name)}</h3><table class="tabela tabela-compacta"><thead><tr><th>Serviço</th><th class="num">Valor</th></tr></thead><tbody>${dados.map((d) => `<tr><td>${esc(d.nome)}</td><td class="num">${fmtBRL(d.valor)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total do mês</td><td class="num">${fmtBRL(dados.reduce((total, d) => total + Number(d.valor), 0))}</td></tr></tfoot></table>`;
+      painel.hidden = false;
+    });
+    limparDetalhe = () => document.removeEventListener('click', fecharDetalhe);
+  }
   const ro = new ResizeObserver(() => ampliado.resize());
   ro.observe(m.corpo);
   const focoAnterior = document.activeElement;
   m.fundo.querySelector('[data-fechar]').focus();
   const obs = new MutationObserver(() => {
-    if (!m.fundo.isConnected) { ro.disconnect(); ampliado.dispose(); obs.disconnect(); focoAnterior?.focus(); }
+    if (!m.fundo.isConnected) { limparDetalhe(); ro.disconnect(); ampliado.dispose(); obs.disconnect(); focoAnterior?.focus(); }
   });
   obs.observe(document.body, { childList: true });
 }

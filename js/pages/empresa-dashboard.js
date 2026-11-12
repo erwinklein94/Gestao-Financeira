@@ -79,7 +79,9 @@ export function opcaoServicosMensais(grupos) {
         const dados = params.filter((x) => x.value !== 0 && x.value != null);
         return `<div class="tt-titulo">${esc(params[0]?.axisValueLabel || '')}</div>${dados.map((x) => `<div class="tt-linha">${x.marker}<span>${esc(x.seriesName)}</span><b>${fmtBRL(x.value)}</b></div>`).join('')}<div class="tt-linha"><span>Total do mês</span><b>${fmtBRL(soma(dados.map((x) => x.value)))}</b></div>`;
       },
-      extraCssText: 'max-width:min(650px,85vw);max-height:55vh;overflow:auto;',
+      triggerOn: 'none',
+      className: 'servicos-tooltip-fixo',
+      extraCssText: 'max-width:min(650px,85vw);white-space:normal;',
       enterable: true,
     },
     xAxis: eixoMeses(),

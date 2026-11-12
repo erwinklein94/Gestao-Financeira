@@ -603,3 +603,6 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 [data-contrato-detalhe]:focus-visible { outline: 2px solid var(--c-titulo); outline-offset: 3px; }
 
 :root[data-theme="dark"] .btn-perigo { background: #9E2626; color: #FFFFFF; }
+
+.servicos-detalhe-fixo { margin: 16px 0; padding: 16px; border: 1px solid var(--c-borda-forte); border-radius: 10px; background: var(--c-superficie-2); }
+.servicos-detalhe-fixo td:first-child { overflow-wrap: anywhere; }
