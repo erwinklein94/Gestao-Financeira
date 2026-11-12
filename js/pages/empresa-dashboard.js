@@ -72,11 +72,6 @@ function secaoClassificacao(e, C, ano) {
   const temItens = C.itens.length > 0;
   const nAbas = new Set(C.itens.map((i) => `${i.mes}|${i.aba}`)).size;
   const meses = [...new Set(C.itens.map((i) => i.mes))].sort((a, b) => a - b).map((m) => MESES[m - 1]);
-  const tabEnc = C.porEncarregado.length ? `<table class="tabela tabela-compacta">
-      <thead><tr><th>Encarregado</th><th class="num">CAPEX</th><th class="num">OPEX</th><th class="num">Sem class.</th><th class="num">Total</th><th style="min-width:130px">Composição</th></tr></thead>
-      <tbody>${C.porEncarregado.map((x) => `<tr><td class="forte">${esc(x.nome)}<div class="sub-linha">${x.abas} ${x.abas === 1 ? 'aba' : 'abas'} de OS</div></td><td class="num">${fmtBRL(x.CAPEX)}</td><td class="num">${fmtBRL(x.OPEX)}</td><td class="num">${fmtBRL(x[SEM_CLASS])}</td><td class="num forte">${fmtBRL(x.total)}</td><td>${barraClassificacao(x)}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><td>Total</td>${NATUREZAS.map((n) => `<td class="num">${fmtBRL(soma(C.porEncarregado.map((x) => x[n])))}</td>`).join('')}<td class="num">${fmtBRL(C.totalItens)}</td><td>${barraClassificacao(Object.fromEntries(NATUREZAS.map((n) => [n, soma(C.porEncarregado.map((x) => x[n]))])))}</td></tr></tfoot>
-    </table>` : vazioHTML('Sem itens detalhados por encarregado.', 'usuarios');
   const tabCod = C.porCodigo.length ? `<table class="tabela tabela-compacta">
       <thead><tr><th>Código</th><th>Serviço</th><th>Natureza</th><th class="num">Quantidade</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
       <tbody>${C.porCodigo.map((x) => `<tr><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
@@ -97,10 +92,7 @@ function secaoClassificacao(e, C, ano) {
       ${cartaoGrafico({ id: 'eClassMes', titulo: 'Natureza do gasto mês a mês', sub: `Realizado ${ano} por classificação contábil`, tabela: { colunas: [{ rotulo: 'Mês' }, ...NATUREZAS.map((n) => ({ rotulo: ROTULO_CURTO[n], num: true })), { rotulo: 'Total', num: true }], linhas: MESES.map((m, i) => [m, ...NATUREZAS.map((n) => fmtBRL(C.porMes[n][i] || null)), fmtBRL(soma(NATUREZAS.map((n) => C.porMes[n][i])) || null)]) } })}
       ${cartaoGrafico({ id: 'eTipo', titulo: 'CAPEX × OPEX × sem classificação', sub: `Participação no realizado ${ano}`, alturaClasse: 'grafico-sm', tabela: { colunas: [{ rotulo: 'Natureza' }, { rotulo: 'Realizado', num: true }, { rotulo: '%', num: true }], linhas: NATUREZAS.map((n) => [n, fmtBRL(C.tot[n]), fmtPct(C.pct[n])]) } })}
     </div>
-    ${temItens ? `<div class="grade g-2">
-      <section class="card"><div class="card-cab"><div><h3>Por encarregado</h3><div class="sub">Abas dos encarregados · ${ano}</div></div></div><div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:420px">${tabEnc}</div></section>
-      <section class="card"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div><div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:420px">${tabCod}</div></section>
-    </div>` : ''}`;
+    ${temItens ? `<section class="card"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div><div class="card-corpo sem-padding tabela-wrap">${tabCod}</div></section>` : ''}`;
 }
 
 function secaoItens(itens, ano, tipo) {
