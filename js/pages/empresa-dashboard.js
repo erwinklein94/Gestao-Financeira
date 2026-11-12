@@ -129,11 +129,19 @@ function secaoItens(itens, ano, tipo) {
   const grupos = agruparItens(itens, tipo);
   return `<section class="card" id="resumo-itens">
     <div class="card-cab"><div><h3>Resumo por item</h3><div class="sub">${ano}${tipo ? ' · ' + esc(tipo) : ''} · Quantidades e valores somados por descrição e unidade</div></div></div>
+    <div class="card-corpo">
+      <div class="filtros">
+        <label class="busca" style="flex:1;min-width:220px"><span class="sr-only">Buscar item</span><input class="input" id="item-busca" type="search" style="width:100%" placeholder="Buscar por descrição do item"></label>
+        <label><span class="sr-only">Unidade do item</span><select class="input" id="item-unidade"><option value="">Todas as unidades</option>${[...new Set(grupos.map((g) => g.unidade || '—'))].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((u) => `<option value="${esc(u)}">${esc(u)}</option>`).join('')}</select></label>
+        <button class="btn btn-secundario btn-sm" id="item-limpar">Limpar filtros</button>
+      </div>
+      <div class="sub" id="item-resultados" role="status" style="margin-top:10px">${grupos.length} itens</div>
+    </div>
     <div class="card-corpo sem-padding tabela-wrap">
       ${grupos.length ? `<table class="tabela tabela-compacta">
         <thead><tr><th>Item</th><th>Unidade</th><th class="num">Quantidade total</th><th class="num">Total em reais</th></tr></thead>
-        <tbody>${grupos.map((g) => `<tr><td class="forte">${esc(g.descricao)}</td><td>${esc(g.unidade || '—')}</td><td class="num">${fmtNum2(g.quantidade)}</td><td class="num forte">${fmtBRL(g.valor)}</td></tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="3">Total dos itens</td><td class="num">${fmtBRL(soma(grupos.map((g) => g.valor)))}</td></tr></tfoot>
+        <tbody>${grupos.map((g) => `<tr data-item-descricao="${esc(g.descricao)}" data-item-unidade="${esc(g.unidade || '—')}" data-item-valor="${g.valor}"><td class="forte">${esc(g.descricao)}</td><td>${esc(g.unidade || '—')}</td><td class="num">${fmtNum2(g.quantidade)}</td><td class="num forte">${fmtBRL(g.valor)}</td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="3">Total dos itens</td><td class="num" id="item-total">${fmtBRL(soma(grupos.map((g) => g.valor)))}</td></tr></tfoot>
       </table>` : vazioHTML('Nenhum item detalhado encontrado para a empresa no ano e filtro selecionados.', 'catalogo')}
     </div>
   </section>`;
@@ -234,6 +242,35 @@ export function render(c, { slug }) {
   </div>`;
 
   c.querySelectorAll('[data-tipo]').forEach((b) => b.addEventListener('click', () => { filtroTipo = b.dataset.tipo || null; window.dispatchEvent(new Event('gf:rerender')); }));
+  const buscaItem = c.querySelector('#item-busca');
+  const unidadeItem = c.querySelector('#item-unidade');
+  if (buscaItem && unidadeItem) {
+    const linhas = [...c.querySelectorAll('#resumo-itens [data-item-descricao]')];
+    const normalizar = (v) => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const mensagem = document.createElement('p');
+    mensagem.className = 'muted';
+    mensagem.style.padding = '16px';
+    mensagem.textContent = 'Nenhum item encontrado para os filtros selecionados.';
+    mensagem.hidden = true;
+    c.querySelector('#resumo-itens .tabela-wrap').appendChild(mensagem);
+    const filtrar = () => {
+      const busca = normalizar(buscaItem.value);
+      let quantidade = 0;
+      let total = 0;
+      linhas.forEach((linha) => {
+        const mostrar = normalizar(linha.dataset.itemDescricao).includes(busca) && (!unidadeItem.value || linha.dataset.itemUnidade === unidadeItem.value);
+        linha.hidden = !mostrar;
+        if (mostrar) { quantidade++; total += Number(linha.dataset.itemValor); }
+      });
+      mensagem.hidden = quantidade > 0;
+      c.querySelector('#item-resultados').textContent = `${quantidade} de ${linhas.length} itens · ${fmtBRL(total)}`;
+      const rodape = c.querySelector('#item-total');
+      if (rodape) rodape.textContent = fmtBRL(total);
+    };
+    buscaItem.addEventListener('input', filtrar);
+    unidadeItem.addEventListener('change', filtrar);
+    c.querySelector('#item-limpar').addEventListener('click', () => { buscaItem.value = ''; unidadeItem.value = ''; filtrar(); buscaItem.focus(); });
+  }
   const buscaServico = c.querySelector('#servico-busca');
   const naturezaServico = c.querySelector('#servico-natureza');
   if (buscaServico && naturezaServico) {
