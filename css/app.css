@@ -608,3 +608,9 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 .servicos-detalhe-fixo td:first-child { overflow-wrap: anywhere; }
 
 .servicos-detalhe-fixo .tabela th.num, .servicos-detalhe-fixo .tabela td.num { text-align: center; }
+
+/* Valores e seus cabeçalhos compartilham o mesmo alinhamento nos modais. */
+.modal th.num,
+.modal td.num,
+.modal .num { text-align: center; }
+.modal .contrato-meta > div { text-align: center; }
