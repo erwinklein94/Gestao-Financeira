@@ -1,3 +1,4 @@
+import { secaoExecucao, ligarExecucao, situacoesDocumentais, tabelasExecucaoPDF } from '../execucao-medicoes.js';
 // =====================================================================
 // Dashboard da empresa
 // =====================================================================
@@ -219,6 +220,7 @@ export function render(c, { slug }) {
   const Rc = resumo({ ano, empresaId: e.id, tipo: 'CAPEX' });
   const Ro = resumo({ ano, empresaId: e.id, tipo: 'OPEX' });
   const C = classificacaoGastos({ ano, empresaId: e.id });
+  const fontes = (store.fontesMedicao || []).filter((f) => f.empresa_id === e.id && f.ano === ano);
   const servicosMensais = gastosMensaisPorServico(C.itens, filtroTipo);
   const contratos = contratosDaEmpresa(e.id).filter((x) => !filtroTipo || x.tipo === filtroTipo
     || store.medicoes.some((m) => m.contrato_id === x.id && m.ano === ano && m.tipo === filtroTipo));
@@ -263,13 +265,14 @@ export function render(c, { slug }) {
 
     ${cartaoGrafico({ id: 'eCurva', titulo: 'Curva acumulada', sub: 'Orçado × realizado × projeção' })}
 
-    ${cartaoGrafico({ id: 'eStatus', titulo: 'Medições por status', sub: `${ano}${rotTipo} — valor por situação`, alturaClasse: 'grafico-sm' })}
+    ${cartaoGrafico({ id: 'eStatus', titulo: C.itens.length ? 'Situação documental dos itens' : 'Medições por status', sub: `${ano}${rotTipo} — situação de origem; não comprova pagamento`, alturaClasse: 'grafico-sm' })}
 
     ${cartaoGrafico({ id: 'eServicosMensais', titulo: 'Gastos mensais por tipo de serviço', sub: `${ano}${rotTipo} · cada segmento representa um código de serviço · barras empilhadas somam o gasto do mês`, alturaClasse: 'grafico-lg', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, ...MESES.map((m) => ({ rotulo: m, num: true })), { rotulo: 'Total', num: true }], linhas: servicosMensais.map((g) => [esc(g.codigo), esc(g.descricao), ...g.valores.map(fmtBRL), fmtBRL(soma(g.valores))]) } })}
 
     ${secaoResumoGastos(C.itens, ano, filtroTipo)}
 
     ${secaoListasClassificacao(C, ano)}
+    ${secaoExecucao(C.itens, fontes, filtroTipo)}
 
     <section class="card">
       <div class="card-cab"><div><h3>Contratos</h3><div class="sub">${contratos.length} contrato(s) · consumo do valor contratado (todos os anos)</div></div>
@@ -291,6 +294,7 @@ export function render(c, { slug }) {
 
   c.querySelectorAll('[data-tipo]').forEach((b) => b.addEventListener('click', () => { filtroTipo = b.dataset.tipo || null; window.dispatchEvent(new Event('gf:rerender')); }));
   ligarResumoGastos(c, C.itens);
+  ligarExecucao(c, C.itens, fontes, filtroTipo);
   const buscaItem = c.querySelector('#item-busca');
   const unidadeItem = c.querySelector('#item-unidade');
   if (buscaItem && unidadeItem) {
@@ -403,7 +407,7 @@ export function render(c, { slug }) {
     { rotulo: 'Classificação', valor: 'classificacao' }, { rotulo: 'Arquivo', valor: 'arquivo' },
   ], [...C.itens].sort((a, b) => a.mes - b.mes || String(a.encarregado).localeCompare(String(b.encarregado)))));
 
-  const porStatus = STATUS_MEDICAO.map((s) => ({ s, v: soma(meds.filter((m) => m.status === s).map((m) => m.valor)), n: meds.filter((m) => m.status === s).length })).filter((x) => x.n > 0);
+  const porStatus = C.itens.length ? situacoesDocumentais(C.itens.filter((i) => !filtroTipo || i.classificacao === filtroTipo)) : STATUS_MEDICAO.map((s) => ({ s, v: soma(meds.filter((m) => m.status === s).map((m) => m.valor)), n: meds.filter((m) => m.status === s).length })).filter((x) => x.n > 0);
   if (porStatus.length) {
     const corStatus = { 'Paga': p.realizado, 'Aprovada': p.previsto, 'Em aprovação': p.alerta, 'Em elaboração': p.suave, 'Glosada': p.erro, 'Cancelada': p.trilho };
     grafico('eStatus', {
@@ -412,7 +416,7 @@ export function render(c, { slug }) {
       grid: { left: 6, right: 170, top: 10, bottom: 4, containLabel: true },
       xAxis: eixoValor(),
       yAxis: { type: 'category', data: porStatus.map((x) => x.s), axisTick: { show: false }, axisLine: { lineStyle: { color: p.grade } }, axisLabel: { color: p.texto } },
-      series: [{ name: 'Valor', type: 'bar', barMaxWidth: 18, data: porStatus.map((x) => ({ value: Math.round(x.v), itemStyle: { color: corStatus[x.s], ...pontaBarra(true) } })), label: { show: true, position: 'right', color: p.texto, fontSize: 11, formatter: (q) => `${porStatus[q.dataIndex].n} · ${fmtBRL(q.value)}` } }],
+      series: [{ name: 'Valor', type: 'bar', barMaxWidth: 18, data: porStatus.map((x) => ({ value: Math.round(x.v), itemStyle: { color: corStatus[x.s] || p.previsto, ...pontaBarra(true) } })), label: { show: true, position: 'right', color: p.texto, fontSize: 11, formatter: (q) => `${porStatus[q.dataIndex].n} · ${fmtBRL(q.value)}` } }],
     });
   } else {
     document.getElementById('eStatus').innerHTML = vazioHTML('Nenhuma medição no ano.', 'medicao');
@@ -428,6 +432,7 @@ export function render(c, { slug }) {
       const relatorio = coletarDashboardPDF(c, { empresa: e, ano, tipo: filtroTipo, R, rc, pend, porStatus, servicosMensais,
         curvas: [R.orcAnual > 0 ? acumular(R.orc) : Array(12).fill(null), serieRealAcumulada(R), serieProjecaoAcumulada(R)] });
       relatorio.tabelas.unshift(tabelaResumoGastosPDF(C.itens, filtroTipo));
+      relatorio.tabelas.push(...tabelasExecucaoPDF(C.itens, fontes, filtroTipo));
       await exportarDashboardPDF(relatorio);
       toast('PDF do dashboard exportado.');
     } catch (erro) {

@@ -625,3 +625,6 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 .tabela-resumo-gastos tbody th { top: auto; }
 .tabela-resumo-gastos thead tr > :first-child { z-index: 3; }
 .tabela-resumo-gastos tbody tr:hover th { background: var(--c-superficie-2); }
+#execucao-medicoes { display: grid; gap: 20px; min-width: 0; }
+#execucao-medicoes .card { min-width: 0; }
+#execucao-medicoes td.num, #execucao-medicoes th.num { text-align: center; }

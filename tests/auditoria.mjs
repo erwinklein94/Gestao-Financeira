@@ -64,6 +64,16 @@ assert.deepEqual(intervaloPagina(1),[0,199]); assert.deepEqual(intervaloPagina(2
 assert.deepEqual(camposAlterados({acao:'update',dados_anteriores:{valor:10,x:null},dados:{valor:20,x:null}}),[{campo:'valor',antes:10,depois:20}]);
 assert.deepEqual(camposAlterados({acao:'delete',dados:{valor:10}}),[{campo:'valor',antes:10,depois:undefined}]);
 console.log('PASS: migrações, RLS por papel, coordenador sem auditoria/acessos, antes/depois, último acesso, criação, bloqueio, antiescalada, eventos e paginação 200.');
+await db.exec('reset role');
+await db.exec("insert into gf_fontes_medicao(empresa_id,ano,mes,arquivo,dados) select id,2026,1,'teste.xlsx','{}'::jsonb from gf_empresas limit 1");
+for (const i of [0,1,2]) {
+  await asRole(i);
+  assert.equal((await db.query('select * from gf_fontes_medicao')).rows.length, i === 0 ? 0 : 1, 'Acervo financeiro só para admin/leitor');
+  await assert.rejects(db.query("update gf_fontes_medicao set arquivo='alterado'"), /permission denied/);
+}
+await db.exec('reset role; set role anon');
+await assert.rejects(db.query('select * from gf_fontes_medicao'), /permission denied/);
+console.log('PASS: fontes protegidas de anônimos/editor e escrita negada ao cliente.');
 await db.close();
 
 // Render e paginação da página com respostas controladas da API.

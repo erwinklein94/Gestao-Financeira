@@ -14,6 +14,7 @@ export const store = {
   previsoes: [],
   medicoes: [],
   itens: [],
+  fontesMedicao: [],
   pendencias: [],
   carregado: false,
 };
@@ -42,6 +43,7 @@ const TABELAS = {
   previsoes: { tabela: 'gf_previsoes', ordem: 'created_at' },
   medicoes: { tabela: 'gf_medicoes', ordem: 'created_at' },
   itens: { tabela: 'gf_medicao_itens', ordem: 'created_at' },
+  fontesMedicao: { tabela: 'gf_fontes_medicao', ordem: 'mes' },
   pendencias: { tabela: 'gf_pendencias', ordem: 'created_at' },
 };
 

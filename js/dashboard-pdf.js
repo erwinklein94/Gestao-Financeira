@@ -53,7 +53,7 @@ export function coletarDashboardPDF(raiz, { empresa, ano, tipo, R, rc, pend, por
   const detalhesExtras = {
     eCurva: tabelaCurva,
     eAder: { titulo: 'Aderência ao forecast - dados', colunas: ['Mês', 'Previsto', 'Realizado', 'Aderência'], linhas: MESES.map((mes, i) => [mes, fmtBRL(R.prev[i]), fmtBRL(R.real[i]), fmtPct(R.aderencia[i])]) },
-    eStatus: { titulo: 'Medições por status - dados', colunas: ['Status', 'Medições', 'Valor', '% do total'], linhas: porStatus.map((s) => [s.s, String(s.n), fmtBRL(s.v), fmtPct(soma(porStatus.map((x) => x.v)) ? s.v / soma(porStatus.map((x) => x.v)) : null)]) },
+    eStatus: { titulo: 'Situação dos registros - dados', colunas: ['Situação', 'Registros', 'Valor', '% do total'], linhas: porStatus.map((s) => [s.s, String(s.n), fmtBRL(s.v), fmtPct(soma(porStatus.map((x) => x.v)) ? s.v / soma(porStatus.map((x) => x.v)) : null)]) },
   };
   for (const g of graficos) if (!g.tabela) g.tabela = detalhesExtras[g.id];
   const itens = tabelaDOM(raiz.querySelector('#resumo-itens table'), 'Resumo por item') || { titulo: 'Resumo por item', colunas: ['Item', 'Unidade', 'Quantidade total', 'Total em reais'], linhas: [] };
