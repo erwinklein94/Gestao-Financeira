@@ -91,7 +91,7 @@ function secaoClassificacao(e, C, ano) {
   const meses = [...new Set(C.itens.map((i) => i.mes))].sort((a, b) => a - b).map((m) => MESES[m - 1]);
   const tabCod = C.porCodigo.length ? `<table class="tabela tabela-compacta">
       <thead><tr><th>Código</th><th>Serviço</th><th>Natureza</th><th class="num">Quantidade</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
-      <tbody>${C.porCodigo.map((x) => `<tr><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
+      <tbody>${C.porCodigo.map((x) => `<tr data-servico-busca="${esc(`${x.codigo} ${x.descricao || ''}`)}" data-servico-natureza="${esc(x.classificacao)}"><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
     </table>` : vazioHTML('Sem itens por código de serviço.', 'catalogo');
 
   return `<section class="card" id="classificacao">
@@ -112,7 +112,16 @@ function secaoClassificacao(e, C, ano) {
     <div class="grade g-3">
       ${NATUREZAS.map((n, i) => cartaoGrafico({ id: `eNatureza${i}`, titulo: `Distribuição · ${n}`, sub: 'Participação dos códigos de serviço no total desta natureza', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, { rotulo: 'Valor', num: true }, { rotulo: '% da natureza', num: true }], linhas: dadosNatureza(C, n).map((x) => [esc(x.codigo), esc(x.descricao || ''), fmtBRL(x.valor), fmtPct(x.valor / soma(dadosNatureza(C, n).map((d) => d.valor)))]) } })).join('')}
     </div>
-    ${temItens ? `<section class="card"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div><div class="card-corpo sem-padding tabela-wrap">${tabCod}</div></section>` : ''}`;
+    ${temItens ? `<section class="card" id="servicos-codigo"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div>
+      <div class="card-corpo">
+        <div class="filtros">
+          <label class="busca" style="flex:1;min-width:220px"><span class="sr-only">Buscar código ou serviço</span><input class="input" id="servico-busca" style="width:100%" type="search" placeholder="Buscar por código ou descrição do serviço"></label>
+          <label><span class="sr-only">Natureza do custo</span><select class="input" id="servico-natureza"><option value="">Todas as naturezas</option>${NATUREZAS.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}</select></label>
+          <button class="btn btn-secundario btn-sm" id="servico-limpar">Limpar filtros</button>
+        </div>
+        <div class="sub" id="servico-resultados" role="status" style="margin-top:10px">${C.porCodigo.length} códigos · ${fmtBRL(soma(C.porCodigo.map((x) => x.valor)))}</div>
+      </div>
+      <div class="card-corpo sem-padding tabela-wrap">${tabCod}</div></section>` : ''}`;
 }
 
 function secaoItens(itens, ano, tipo) {
@@ -226,6 +235,33 @@ export function render(c, { slug }) {
   </div>`;
 
   c.querySelectorAll('[data-tipo]').forEach((b) => b.addEventListener('click', () => { filtroTipo = b.dataset.tipo || null; window.dispatchEvent(new Event('gf:rerender')); }));
+  const buscaServico = c.querySelector('#servico-busca');
+  const naturezaServico = c.querySelector('#servico-natureza');
+  if (buscaServico && naturezaServico) {
+    const normalizar = (v) => String(v).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const linhas = [...c.querySelectorAll('#servicos-codigo tbody tr')];
+    const vazio = document.createElement('p');
+    vazio.className = 'muted';
+    vazio.style.padding = '16px';
+    vazio.textContent = 'Nenhum serviço encontrado para os filtros selecionados.';
+    vazio.hidden = true;
+    c.querySelector('#servicos-codigo .tabela-wrap').appendChild(vazio);
+    const filtrar = () => {
+      const busca = normalizar(buscaServico.value);
+      let quantidade = 0;
+      let total = 0;
+      linhas.forEach((linha, i) => {
+        const mostrar = normalizar(linha.dataset.servicoBusca).includes(busca) && (!naturezaServico.value || linha.dataset.servicoNatureza === naturezaServico.value);
+        linha.hidden = !mostrar;
+        if (mostrar) { quantidade++; total += C.porCodigo[i].valor; }
+      });
+      vazio.hidden = quantidade > 0;
+      c.querySelector('#servico-resultados').textContent = `${quantidade} de ${C.porCodigo.length} códigos · ${fmtBRL(total)} · Percentuais sobre o total geral`;
+    };
+    buscaServico.addEventListener('input', filtrar);
+    naturezaServico.addEventListener('change', filtrar);
+    c.querySelector('#servico-limpar').addEventListener('click', () => { buscaServico.value = ''; naturezaServico.value = ''; filtrar(); buscaServico.focus(); });
+  }
   ligarAlternancias(c);
 
   grafico('eMensal', opcaoMensal(R));
