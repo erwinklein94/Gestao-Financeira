@@ -59,6 +59,7 @@
   --c-primaria-texto: var(--marca-azul-noite);
   --c-acento: var(--marca-azul-claro);
   --c-link: #7CC6EF;
+  --c-erro: #FF9C9C;
   --c-sucesso: var(--marca-verde-claro);
   --c-grade: rgba(189, 204, 212, 0.12);
   --c-sidebar: #00101F;
@@ -598,3 +599,5 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 
 [data-contrato-detalhe] { cursor: pointer; }
 [data-contrato-detalhe]:focus-visible { outline: 2px solid var(--c-titulo); outline-offset: 3px; }
+
+:root[data-theme="dark"] .btn-perigo { background: #9E2626; color: #FFFFFF; }
