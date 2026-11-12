@@ -2,13 +2,14 @@
 // Dashboard da empresa
 // =====================================================================
 import { agruparItens } from '../itens.js';
+import { coletarDashboardPDF, exportarDashboardPDF } from '../dashboard-pdf.js';
 import { store, empresaPorSlug, contratosDaEmpresa } from '../state.js';
 import { resumo, resumoContrato, alertas, medicaoConta, classificacaoGastos } from '../calc.js';
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra } from '../charts.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone, grafismo } from '../icons.js';
-import { fmtBRL, fmtPct, fmtNum2, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO, NATUREZAS, SEM_CLASS, baixarCSV, modal } from '../utils.js';
-import { kpi, classeBarra, opcaoCurvaAcumulada, opcaoMensal } from './painel.js';
+import { fmtBRL, fmtPct, fmtNum2, MESES, MESES_LONGOS, esc, soma, acumular, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO, NATUREZAS, SEM_CLASS, baixarCSV, modal, toast } from '../utils.js';
+import { kpi, classeBarra, opcaoCurvaAcumulada, opcaoMensal, serieRealAcumulada, serieProjecaoAcumulada } from './painel.js';
 
 const CLASSE_CSS = { CAPEX: 'capex', OPEX: 'opex', [SEM_CLASS]: 'semclass' };
 const ROTULO_CURTO = { CAPEX: 'CAPEX', OPEX: 'OPEX', [SEM_CLASS]: 'Sem class.' };
@@ -235,6 +236,7 @@ export function render(c, { slug }) {
     <div class="hero-num"><small>Medido acumulado</small><strong>${fmtBRL(medidoTotal)}</strong></div>
     <div class="hero-num"><small>Saldo contratual</small><strong style="${saldoContratual < 0 ? 'color:#FFB3B3' : ''}">${fmtBRL(saldoContratual)}</strong></div>
     <div class="segmentado" role="group" aria-label="Filtrar CAPEX/OPEX">${[[null, 'Total'], ['CAPEX', 'CAPEX'], ['OPEX', 'OPEX'], [SEM_CLASS, 'Sem class.']].map(([v, t]) => `<button data-tipo="${v || ''}" class="${filtroTipo === v ? 'ativo' : ''}">${t}</button>`).join('')}</div>
+    <button class="btn btn-secundario btn-sm" id="exportarDashboardPdf">${icone('download', 'icon-sm')}Exportar PDF</button>
   </div>`;
 
   c.innerHTML = `<div class="pagina">
@@ -411,6 +413,27 @@ export function render(c, { slug }) {
   } else {
     document.getElementById('eStatus').innerHTML = vazioHTML('Nenhuma medição no ano.', 'medicao');
   }
+  c.querySelector('#exportarDashboardPdf').addEventListener('click', async (ev) => {
+    const botao = ev.currentTarget;
+    if (botao.disabled) return;
+    const rotulo = botao.innerHTML;
+    botao.disabled = true;
+    botao.textContent = 'Gerando PDF…';
+    botao.setAttribute('aria-busy', 'true');
+    try {
+      const relatorio = coletarDashboardPDF(c, { empresa: e, ano, tipo: filtroTipo, R, rc, pend, porStatus, servicosMensais,
+        curvas: [R.orcAnual > 0 ? acumular(R.orc) : Array(12).fill(null), serieRealAcumulada(R), serieProjecaoAcumulada(R)] });
+      await exportarDashboardPDF(relatorio);
+      toast('PDF do dashboard exportado.');
+    } catch (erro) {
+      console.error('Falha ao exportar dashboard:', erro);
+      toast(erro.message || 'Não foi possível gerar o PDF. Tente novamente.', 'erro', 6000);
+    } finally {
+      botao.disabled = false;
+      botao.innerHTML = rotulo;
+      botao.removeAttribute('aria-busy');
+    }
+  });
 }
 
 function cartaoContrato({ ct, r }, indice = null) {
