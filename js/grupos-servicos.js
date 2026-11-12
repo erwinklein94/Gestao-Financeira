@@ -1,6 +1,9 @@
 // Fonte: Apoio OS.xlsx, aba Apoio, colunas I (código) e K (Grupo PDM).
 // Códigos repetidos em grupos distintos são mantidos para sinalizar a ambiguidade.
 export const GRUPOS_SERVICOS = {
+  // Fonte complementar: medições DR/2026, aba ITENS CONTRATUAIS.
+  // 3005870 é ADM LOCAL nas medições; substitui seu grupo Infra - Obras no apoio.
+  "Adm Local": ["3005870"],
   "PN - Manutenção": [
     "3004029",
     "3007464",
@@ -73,7 +76,6 @@ export const GRUPOS_SERVICOS = {
     "3001477",
     "3004016",
     "3000186",
-    "3005870",
     "3002245",
     "3005789",
     "3004201",

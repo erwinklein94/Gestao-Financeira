@@ -60,7 +60,7 @@ export function secaoResumoGastos(itens, ano, naturezaInicial = '') {
       </div>
       <fieldset class="gastos-meses"><legend>Meses</legend>${meses.length ? meses.map((mes) => `<label><input type="checkbox" data-gastos-mes value="${mes}" checked> ${MESES_LONGOS[mes - 1]}</label>`).join('') : '<span class="muted">Nenhum mês com gastos.</span>'}</fieldset>
       <p class="sub" id="gastos-resultado" role="status"></p>
-      <p class="sub" style="margin-top:8px">Grupos da planilha Apoio OS. Códigos presentes em mais de um grupo aparecem em “Grupo a definir”; códigos não listados aparecem em “Sem grupo na planilha”.</p>
+      <p class="sub" style="margin-top:8px">Grupos da planilha Apoio OS, complementados por Adm Local das medições. Códigos presentes em mais de um grupo aparecem em “Grupo a definir”; códigos não listados aparecem em “Sem grupo na planilha”.</p>
     </div>
     <div class="card-corpo sem-padding tabela-wrap" id="gastos-tabela"></div>
   </section>`;

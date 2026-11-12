@@ -3,6 +3,7 @@ import { grupoDoServico, resumirGastos, tabelaResumoGastosPDF, GRUPO_A_DEFINIR, 
 import { GRUPOS_SERVICOS } from '../js/grupos-servicos.js';
 
 assert.equal(new Set(Object.values(GRUPOS_SERVICOS).flat()).size, 149);
+assert.equal(grupoDoServico('3005870'), 'Adm Local');
 for (const codigo of ['3001476', '3001908', '3001477', '3004016', '3000186']) assert.equal(grupoDoServico(codigo), GRUPO_A_DEFINIR);
 assert.equal(grupoDoServico(' 3004005.0 '), 'Infra - Limpeza');
 assert.equal(grupoDoServico(3001841), 'Infra - Patrulha');
@@ -21,7 +22,10 @@ assert.equal(resumirGastos(itens, { meses: [] }).total, 0);
 assert.deepEqual(resumirGastos([]).meses, []);
 const pdf = tabelaResumoGastosPDF(itens);
 assert.deepEqual(pdf.colunas, ['Grupo', 'Jan', 'Fev', 'Mar', 'Total']);
-assert.equal(pdf.linhas.length, 14);
+assert.equal(pdf.linhas.length, 15);
 assert.equal(pdf.rodape[0].length, pdf.colunas.length);
 assert.deepEqual(tabelaResumoGastosPDF([]).linhas, []);
-console.log('PASS: 149 códigos, ambiguidade sem duplicação, grupos ausentes, meses, naturezas, créditos, totais e PDF.');
+const adm = resumirGastos([item('3005870', 4, 130099.86, 'Sem classificação')], { natureza: 'Sem classificação' });
+assert.equal(adm.linhas.find((l) => l.grupo === 'Adm Local').total, 130099.86);
+assert.equal(adm.total, 130099.86);
+console.log('PASS: 149 códigos, ADM Local, ambiguidade sem duplicação, grupos ausentes, meses, naturezas, créditos, totais e PDF.');
