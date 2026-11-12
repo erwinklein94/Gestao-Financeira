@@ -89,10 +89,7 @@ function secaoClassificacao(e, C, ano) {
   const temItens = C.itens.length > 0;
   const nAbas = new Set(C.itens.map((i) => `${i.mes}|${i.aba}`)).size;
   const meses = [...new Set(C.itens.map((i) => i.mes))].sort((a, b) => a - b).map((m) => MESES[m - 1]);
-  const tabCod = C.porCodigo.length ? `<table class="tabela tabela-compacta">
-      <thead><tr><th>Código</th><th>Serviço</th><th>Natureza</th><th class="num">Quantidade</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
-      <tbody>${C.porCodigo.map((x) => `<tr data-servico-busca="${esc(`${x.codigo} ${x.descricao || ''}`)}" data-servico-natureza="${esc(x.classificacao)}"><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
-    </table>` : vazioHTML('Sem itens por código de serviço.', 'catalogo');
+
 
   return `<section class="card" id="classificacao">
       <div class="card-cab" style="flex-wrap:wrap">
@@ -111,8 +108,16 @@ function secaoClassificacao(e, C, ano) {
     </div>
     <div class="grade g-3">
       ${NATUREZAS.map((n, i) => cartaoGrafico({ id: `eNatureza${i}`, titulo: `Distribuição · ${n}`, sub: 'Participação dos códigos de serviço no total desta natureza', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, { rotulo: 'Valor', num: true }, { rotulo: '% da natureza', num: true }], linhas: dadosNatureza(C, n).map((x) => [esc(x.codigo), esc(x.descricao || ''), fmtBRL(x.valor), fmtPct(x.valor / soma(dadosNatureza(C, n).map((d) => d.valor)))]) } })).join('')}
-    </div>
-    ${secaoItens(C.itens, ano, filtroTipo)}
+    </div>`;
+}
+
+function secaoListasClassificacao(C, ano) {
+  const temItens = C.itens.length > 0;
+  const tabCod = C.porCodigo.length ? `<table class="tabela tabela-compacta">
+      <thead><tr><th>Código</th><th>Serviço</th><th>Natureza</th><th class="num">Quantidade</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
+      <tbody>${C.porCodigo.map((x) => `<tr data-servico-busca="${esc(`${x.codigo} ${x.descricao || ''}`)}" data-servico-natureza="${esc(x.classificacao)}"><td class="forte nowrap">${esc(x.codigo)}</td><td>${esc(x.descricao || '')}${x.noCatalogo ? '' : '<div class="sub-linha">código não encontrado no catálogo</div>'}</td><td>${badgeTipo(x.classificacao)}</td><td class="num nowrap">${fmtNum2(x.quantidade)} ${esc(x.unidade || '')}</td><td class="num forte">${fmtBRL(x.valor)}</td><td class="num">${fmtPct(C.totalItens ? x.valor / C.totalItens : null)}</td></tr>`).join('')}</tbody>
+    </table>` : vazioHTML('Sem itens por código de serviço.', 'catalogo');
+  return `${secaoItens(C.itens, ano, filtroTipo)}
     ${temItens ? `<section class="card" id="servicos-codigo"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div>
       <div class="card-corpo">
         <div class="filtros">
@@ -220,20 +225,21 @@ export function render(c, { slug }) {
 
     ${cartaoGrafico({ id: 'eCurva', titulo: 'Curva acumulada', sub: 'Orçado × realizado × projeção' })}
 
+    ${cartaoGrafico({ id: 'eStatus', titulo: 'Medições por status', sub: `${ano}${rotTipo} — valor por situação`, alturaClasse: 'grafico-sm' })}
+
+    ${secaoListasClassificacao(C, ano)}
+
     <section class="card">
       <div class="card-cab"><div><h3>Contratos</h3><div class="sub">${contratos.length} contrato(s) · consumo do valor contratado (todos os anos)</div></div>
         <div class="card-acoes so-edicao"><a class="btn btn-secundario btn-sm" href="#/empresa/${e.slug}/registros/contratos">${icone('editar', 'icon-sm')}Gerenciar</a></div></div>
       <div class="card-corpo"><div class="contratos-grid">${rc.length ? rc.map((item, i) => cartaoContrato(item, i)).join('') : vazioHTML('Nenhum contrato cadastrado.', 'contrato')}</div></div>
     </section>
 
-    <div class="grade g-2">
-      ${cartaoGrafico({ id: 'eStatus', titulo: 'Medições por status', sub: `${ano}${rotTipo} — valor por situação`, alturaClasse: 'grafico-sm' })}
       <section class="card">
         <div class="card-cab"><div><h3>Pendências em aberto</h3><div class="sub">${pend.length} item(ns)</div></div>
           <div class="card-acoes so-edicao"><a class="btn btn-secundario btn-sm" href="#/empresa/${e.slug}/registros/pendencias">${icone('lista', 'icon-sm')}Ver todas</a></div></div>
         <div class="card-corpo"><div class="lista rolavel" style="max-height:260px">${pend.length ? pend.map((x) => `<div class="lista-item"><span class="lista-icone ${x.prioridade === 'Alta' ? 'erro' : x.prioridade === 'Média' ? 'alerta' : 'info'}">${icone('pendencia', 'icon-sm')}</span><div class="lista-texto"><strong>${esc(x.titulo)}</strong><span>${esc([x.responsavel, x.prazo ? `prazo ${fmtData(x.prazo)}` : null, x.descricao].filter(Boolean).join(' · '))}</span></div><div style="text-align:right">${x.valor ? `<b class="num" style="display:block">${fmtBRL(x.valor)}</b>` : ''}${badgePrioridade(x.prioridade)}</div></div>`).join('') : vazioHTML('Sem pendências em aberto.', 'check')}</div></div>
       </section>
-    </div>
 
     <section class="card">
       <div class="card-cab"><div><h3>Detalhamento mensal ${ano}${rotTipo}</h3><div class="sub">Orçado, previsto, realizado, desvio e aderência</div></div></div>
