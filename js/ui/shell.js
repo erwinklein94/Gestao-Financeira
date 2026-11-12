@@ -45,7 +45,7 @@ export function montarShell(raiz, { onSair, onTema }) {
     <div class="sidebar-backdrop" id="sbBackdrop"></div>
     <div class="main">
       <header class="topbar">
-        <button class="btn-topo btn tb-menu" id="tbMenu" aria-label="Abrir menu">${icone('menu')}</button>
+        <button class="btn-topo btn tb-menu" id="tbMenu" aria-controls="sidebar" aria-expanded="false" aria-label="Abrir menu">${icone('menu')}</button>
         <div class="tb-titulo"><div class="tb-trilha" id="tbTrilha"></div><div class="tb-nome" id="tbNome"></div></div>
         <div class="tb-acoes">
           <label class="tb-ano" title="Ano de referência">${icone('calendario', 'icon-sm')}<span class="sr-only">Ano</span><select id="tbAno"></select></label>
@@ -87,13 +87,36 @@ export function montarShell(raiz, { onSair, onTema }) {
   preencherAnos();
 
   const app = document.getElementById('appRoot');
-  document.getElementById('sbRecolher').addEventListener('click', () => {
-    app.classList.toggle('sb-recolhida');
-    try { localStorage.setItem('gf-sb-recolhida', app.classList.contains('sb-recolhida') ? '1' : '0'); } catch (e) { /* ignore */ }
+  const menuBotao = document.getElementById('tbMenu');
+  const recolherBotao = document.getElementById('sbRecolher');
+  const telaMobile = window.matchMedia('(max-width: 1024px)');
+  const atualizarMenu = () => {
+    const aberto = telaMobile.matches ? app.classList.contains('sb-aberta-mobile') : !app.classList.contains('sb-recolhida');
+    menuBotao.setAttribute('aria-expanded', String(aberto));
+    menuBotao.setAttribute('aria-label', aberto ? 'Recolher menu' : 'Abrir menu');
+    menuBotao.title = aberto ? 'Recolher menu' : 'Abrir menu';
+    recolherBotao.title = aberto ? 'Recolher menu' : 'Expandir menu';
+    recolherBotao.querySelector('.sb-rotulo').textContent = recolherBotao.title;
+  };
+  const fecharMobile = () => { app.classList.remove('sb-aberta-mobile'); atualizarMenu(); };
+  const alternarMenu = () => {
+    if (telaMobile.matches) app.classList.toggle('sb-aberta-mobile');
+    else {
+      app.classList.toggle('sb-recolhida');
+      try { localStorage.setItem('gf-sb-recolhida', app.classList.contains('sb-recolhida') ? '1' : '0'); } catch (e) { /* ignore */ }
+    }
+    atualizarMenu();
     setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
+  };
+  recolherBotao.addEventListener('click', alternarMenu);
+  menuBotao.addEventListener('click', alternarMenu);
+  document.getElementById('sbBackdrop').addEventListener('click', fecharMobile);
+  document.getElementById('sbNav').addEventListener('click', (e) => { if (e.target.closest('a')) fecharMobile(); });
+  app.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && app.classList.contains('sb-aberta-mobile')) { fecharMobile(); menuBotao.focus(); }
   });
-  document.getElementById('tbMenu').addEventListener('click', () => app.classList.add('sb-aberta-mobile'));
-  document.getElementById('sbBackdrop').addEventListener('click', () => app.classList.remove('sb-aberta-mobile'));
+  telaMobile.addEventListener('change', fecharMobile);
+  atualizarMenu();
 
   document.querySelectorAll('[data-tema-btn]').forEach((b) => { atualizarBotaoTema(b); b.addEventListener('click', alternarTema); });
 

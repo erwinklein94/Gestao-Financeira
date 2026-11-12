@@ -191,7 +191,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tb-trilha a { color: inherit; }
 .tb-nome { font-size: 16px; font-weight: 700; color: var(--c-titulo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tb-acoes { display: flex; align-items: center; gap: 8px; }
-.tb-menu { display: none; }
+.tb-menu { display: inline-flex; }
 .tb-ano { display: flex; align-items: center; gap: 6px; padding: 0 4px 0 10px; height: 38px; border: 1px solid var(--c-borda-forte); border-radius: 10px; background: var(--c-superficie); }
 .tb-ano select { border: 0; background: transparent; height: 36px; padding: 0 6px; font-weight: 700; color: var(--c-titulo); cursor: pointer; }
 .tb-ano select:focus { outline: none; }
@@ -556,6 +556,8 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
   .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); transform: translateX(-100%); transition: transform .22s ease; }
   .app.sb-aberta-mobile .sidebar { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.35); }
   .app.sb-recolhida .sb-marca-texto, .app.sb-recolhida .sb-rotulo, .app.sb-recolhida .sb-secao, .app.sb-recolhida .sb-seta { display: initial !important; }
+  .app.sb-recolhida .sb-grupo.aberto .sb-sub { display: block !important; }
+  .app.sb-recolhida .sb-link, .app.sb-recolhida .sb-grupo-btn { justify-content: flex-start; padding: 10px 12px; }
   .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,21,40,.5); z-index: 35; display: none; }
   .app.sb-aberta-mobile .sidebar-backdrop { display: block; }
   .tb-menu { display: inline-flex; }
