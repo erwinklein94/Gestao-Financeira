@@ -99,7 +99,7 @@ function secaoItens(itens, ano, tipo) {
   const grupos = agruparItens(itens, tipo);
   return `<section class="card" id="resumo-itens">
     <div class="card-cab"><div><h3>Resumo por item</h3><div class="sub">${ano}${tipo ? ' · ' + esc(tipo) : ''} · Quantidades e valores somados por descrição e unidade</div></div></div>
-    <div class="card-corpo sem-padding tabela-wrap rolavel" style="max-height:480px">
+    <div class="card-corpo sem-padding tabela-wrap">
       ${grupos.length ? `<table class="tabela tabela-compacta">
         <thead><tr><th>Item</th><th>Unidade</th><th class="num">Quantidade total</th><th class="num">Total em reais</th></tr></thead>
         <tbody>${grupos.map((g) => `<tr><td class="forte">${esc(g.descricao)}</td><td>${esc(g.unidade || '—')}</td><td class="num">${fmtNum2(g.quantidade)}</td><td class="num forte">${fmtBRL(g.valor)}</td></tr>`).join('')}</tbody>
