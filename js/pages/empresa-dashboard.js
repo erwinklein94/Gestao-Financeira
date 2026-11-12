@@ -112,6 +112,7 @@ function secaoClassificacao(e, C, ano) {
     <div class="grade g-3">
       ${NATUREZAS.map((n, i) => cartaoGrafico({ id: `eNatureza${i}`, titulo: `Distribuição · ${n}`, sub: 'Participação dos códigos de serviço no total desta natureza', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, { rotulo: 'Valor', num: true }, { rotulo: '% da natureza', num: true }], linhas: dadosNatureza(C, n).map((x) => [esc(x.codigo), esc(x.descricao || ''), fmtBRL(x.valor), fmtPct(x.valor / soma(dadosNatureza(C, n).map((d) => d.valor)))]) } })).join('')}
     </div>
+    ${secaoItens(C.itens, ano, filtroTipo)}
     ${temItens ? `<section class="card" id="servicos-codigo"><div class="card-cab"><div><h3>Por código de serviço</h3><div class="sub">${C.porCodigo.length} códigos cruzados com o catálogo</div></div></div>
       <div class="card-corpo">
         <div class="filtros">
@@ -201,8 +202,6 @@ export function render(c, { slug }) {
       ${kpi({ rotulo: 'Pode gastar por mês', valor: R.orcAnual > 0 && R.restantes > 0 ? fmtBRL(R.margemMensal) : '—', icone: 'alvo', cor: 'verde-claro', detalhe: filtroTipo ? `margem ${filtroTipo}` : `CAPEX ${Rc.orcAnual > 0 ? fmtBRL(Rc.margemMensal) : '—'} · OPEX ${Ro.orcAnual > 0 ? fmtBRL(Ro.margemMensal) : '—'}` })}
       ${kpi({ rotulo: 'Projeção até dezembro', valor: fmtBRL(R.projAnual), icone: 'tendencia', cor: R.situacao === 'estouro' ? 'laranja' : '', detalhe: `${badgeSituacao(R.situacao)}` })}
     </div>
-
-    ${secaoItens(C.itens, ano, filtroTipo)}
 
     ${secaoClassificacao(e, C, ano)}
 
