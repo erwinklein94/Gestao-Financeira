@@ -595,3 +595,6 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 .grafico-ampliavel:focus-visible { outline: 2px solid var(--c-titulo); outline-offset: 3px; }
 .modal.modal-grafico { width: min(1200px, 100%); }
 .modal-grafico .grafico-expandido { height: min(55vh, 560px); min-height: 300px; }
+
+[data-contrato-detalhe] { cursor: pointer; }
+[data-contrato-detalhe]:focus-visible { outline: 2px solid var(--c-titulo); outline-offset: 3px; }

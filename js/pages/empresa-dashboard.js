@@ -7,7 +7,7 @@ import { resumo, resumoContrato, alertas, medicaoConta, classificacaoGastos } fr
 import { grafico, cartaoGrafico, ligarAlternancias, paleta, corEmpresa, eixoMeses, eixoValor, tooltipEixo, tooltipItem, pontaBarra } from '../charts.js';
 import { definirTitulo } from '../ui/shell.js';
 import { icone, grafismo } from '../icons.js';
-import { fmtBRL, fmtPct, fmtNum2, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO, NATUREZAS, SEM_CLASS, baixarCSV } from '../utils.js';
+import { fmtBRL, fmtPct, fmtNum2, MESES, MESES_LONGOS, esc, soma, badgeSituacao, badgeTipo, badgeStatusContrato, badgePrioridade, vazioHTML, fmtData, STATUS_MEDICAO, NATUREZAS, SEM_CLASS, baixarCSV, modal } from '../utils.js';
 import { kpi, classeBarra, opcaoCurvaAcumulada, opcaoMensal } from './painel.js';
 
 const CLASSE_CSS = { CAPEX: 'capex', OPEX: 'opex', [SEM_CLASS]: 'semclass' };
@@ -216,7 +216,7 @@ export function render(c, { slug }) {
     <section class="card">
       <div class="card-cab"><div><h3>Contratos</h3><div class="sub">${contratos.length} contrato(s) · consumo do valor contratado (todos os anos)</div></div>
         <div class="card-acoes so-edicao"><a class="btn btn-secundario btn-sm" href="#/empresa/${e.slug}/registros/contratos">${icone('editar', 'icon-sm')}Gerenciar</a></div></div>
-      <div class="card-corpo"><div class="contratos-grid">${rc.length ? rc.map(cartaoContrato).join('') : vazioHTML('Nenhum contrato cadastrado.', 'contrato')}</div></div>
+      <div class="card-corpo"><div class="contratos-grid">${rc.length ? rc.map((item, i) => cartaoContrato(item, i)).join('') : vazioHTML('Nenhum contrato cadastrado.', 'contrato')}</div></div>
     </section>
 
     <div class="grade g-2">
@@ -262,6 +262,26 @@ export function render(c, { slug }) {
     naturezaServico.addEventListener('change', filtrar);
     c.querySelector('#servico-limpar').addEventListener('click', () => { buscaServico.value = ''; naturezaServico.value = ''; filtrar(); buscaServico.focus(); });
   }
+  c.querySelectorAll('[data-contrato-detalhe]').forEach((cartao) => {
+    const abrir = () => {
+      const item = rc[Number(cartao.dataset.contratoDetalhe)];
+      const { ct } = item;
+      const m = modal({
+        titulo: ct.titulo,
+        subtitulo: 'Detalhes do contrato · valores acumulados de todos os anos',
+        corpo: `${cartaoContrato(item)}<div class="contrato-meta" style="margin-top:18px"><div><span>Início da vigência</span><b>${fmtData(ct.data_inicio)}</b></div><div><span>Fim da vigência</span><b>${fmtData(ct.data_fim)}</b></div></div>`,
+      });
+      m.fundo.querySelector('[data-fechar]').focus();
+      const obs = new MutationObserver(() => {
+        if (!m.fundo.isConnected) { obs.disconnect(); cartao.focus(); }
+      });
+      obs.observe(document.body, { childList: true });
+    };
+    cartao.addEventListener('click', abrir);
+    cartao.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); abrir(); }
+    });
+  });
   ligarAlternancias(c);
 
   grafico('eMensal', opcaoMensal(R));
@@ -312,9 +332,9 @@ export function render(c, { slug }) {
   }
 }
 
-function cartaoContrato({ ct, r }) {
+function cartaoContrato({ ct, r }, indice = null) {
   const pct = r.pct ?? 0;
-  return `<article class="card contrato-card" style="box-shadow:none">
+  return `<article class="card contrato-card" ${indice === null ? '' : `data-contrato-detalhe="${indice}" role="button" tabindex="0" aria-label="Ver detalhes do contrato ${esc(ct.titulo)}"`} style="box-shadow:none">
     <div class="contrato-cab"><div style="min-width:0"><h3>${esc(ct.titulo)}</h3><div class="muted small">SAP ${esc(ct.contrato_sap || '—')}${ct.contrato_ariba ? ` · Ariba ${esc(ct.contrato_ariba)}` : ''}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${badgeTipo(ct.tipo)}${badgeStatusContrato(ct.status)}</div></div>
     <div><div class="progresso"><span class="${r.nivel === 'erro' ? 'erro' : r.nivel === 'alerta' ? 'alerta' : ''}" style="width:${Math.min(100, pct * 100)}%"></span></div>
