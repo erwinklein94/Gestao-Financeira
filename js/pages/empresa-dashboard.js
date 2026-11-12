@@ -57,6 +57,37 @@ export function opcaoClassRosca(tot) {
   };
 }
 
+export function gastosMensaisPorServico(itens, tipo = null) {
+  const grupos = new Map();
+  for (const item of itens) {
+    if (tipo && (NATUREZAS.includes(item.classificacao) ? item.classificacao : SEM_CLASS) !== tipo) continue;
+    const mes = Number(item.mes) - 1;
+    if (!Number.isInteger(mes) || mes < 0 || mes > 11) continue;
+    const codigo = String(item.codigo_servico || 'Sem código');
+    if (!grupos.has(codigo)) grupos.set(codigo, { codigo, descricao: item.descricao || '', valores: Array(12).fill(0) });
+    grupos.get(codigo).valores[mes] += Number(item.valor) || 0;
+  }
+  return [...grupos.values()].sort((a, b) => soma(b.valores) - soma(a.valores));
+}
+
+export function opcaoServicosMensais(grupos) {
+  return {
+    legend: { type: 'scroll', data: grupos.map((g) => `${g.codigo} · ${g.descricao}`) },
+    tooltip: {
+      ...tooltipEixo(fmtBRL),
+      formatter: (params) => {
+        const dados = params.filter((x) => x.value !== 0 && x.value != null);
+        return `<div class="tt-titulo">${esc(params[0]?.axisValueLabel || '')}</div>${dados.map((x) => `<div class="tt-linha">${x.marker}<span>${esc(x.seriesName)}</span><b>${fmtBRL(x.value)}</b></div>`).join('')}<div class="tt-linha"><span>Total do mês</span><b>${fmtBRL(soma(dados.map((x) => x.value)))}</b></div>`;
+      },
+      extraCssText: 'max-width:min(650px,85vw);max-height:55vh;overflow:auto;',
+      enterable: true,
+    },
+    xAxis: eixoMeses(),
+    yAxis: eixoValor(),
+    series: grupos.map((g) => ({ name: `${g.codigo} · ${g.descricao}`, type: 'bar', stack: 'servicos', barMaxWidth: 48, data: g.valores })),
+  };
+}
+
 function dadosNatureza(C, natureza) {
   return C.porCodigo.filter((x) => x.classificacao === natureza && x.valor > 0);
 }
@@ -184,6 +215,7 @@ export function render(c, { slug }) {
   const Rc = resumo({ ano, empresaId: e.id, tipo: 'CAPEX' });
   const Ro = resumo({ ano, empresaId: e.id, tipo: 'OPEX' });
   const C = classificacaoGastos({ ano, empresaId: e.id });
+  const servicosMensais = gastosMensaisPorServico(C.itens, filtroTipo);
   const contratos = contratosDaEmpresa(e.id).filter((x) => !filtroTipo || x.tipo === filtroTipo
     || store.medicoes.some((m) => m.contrato_id === x.id && m.ano === ano && m.tipo === filtroTipo));
   const rc = contratos.map((ct) => ({ ct, r: resumoContrato(ct, ano) }));
@@ -227,6 +259,8 @@ export function render(c, { slug }) {
     ${cartaoGrafico({ id: 'eCurva', titulo: 'Curva acumulada', sub: 'Orçado × realizado × projeção' })}
 
     ${cartaoGrafico({ id: 'eStatus', titulo: 'Medições por status', sub: `${ano}${rotTipo} — valor por situação`, alturaClasse: 'grafico-sm' })}
+
+    ${cartaoGrafico({ id: 'eServicosMensais', titulo: 'Gastos mensais por tipo de serviço', sub: `${ano}${rotTipo} · cada segmento representa um código de serviço · barras empilhadas somam o gasto do mês`, alturaClasse: 'grafico-lg', tabela: { colunas: [{ rotulo: 'Código' }, { rotulo: 'Serviço' }, ...MESES.map((m) => ({ rotulo: m, num: true })), { rotulo: 'Total', num: true }], linhas: servicosMensais.map((g) => [esc(g.codigo), esc(g.descricao), ...g.valores.map(fmtBRL), fmtBRL(soma(g.valores))]) } })}
 
     ${secaoListasClassificacao(C, ano)}
 
@@ -327,6 +361,8 @@ export function render(c, { slug }) {
   });
   ligarAlternancias(c);
 
+  if (servicosMensais.length) grafico('eServicosMensais', opcaoServicosMensais(servicosMensais));
+  else document.getElementById('eServicosMensais').innerHTML = vazioHTML('Nenhum item de serviço encontrado para o ano e filtro selecionados.', 'catalogo');
   grafico('eMensal', opcaoMensal(R));
   if (temPrev) {
     const ader = R.aderencia.map((v) => (v === null ? null : Math.round(v * 1000) / 10));
