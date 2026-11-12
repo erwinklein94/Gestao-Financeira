@@ -606,3 +606,5 @@ body.apresentando .apresentacao-barra.ocioso:hover { opacity: 1; }
 
 .servicos-detalhe-fixo { margin: 16px 0; padding: 16px; border: 1px solid var(--c-borda-forte); border-radius: 10px; background: var(--c-superficie-2); }
 .servicos-detalhe-fixo td:first-child { overflow-wrap: anywhere; }
+
+.servicos-detalhe-fixo .tabela th.num, .servicos-detalhe-fixo .tabela td.num { text-align: center; }

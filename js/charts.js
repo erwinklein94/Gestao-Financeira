@@ -158,7 +158,8 @@ function ampliarGrafico(elemento, origem) {
       if (evento.componentType !== 'series') return;
       evento.event?.event?.stopPropagation();
       const dados = (opcao.series || []).map((serie) => ({ nome: serie.name, valor: serie.data[evento.dataIndex]?.value ?? serie.data[evento.dataIndex] })).filter((d) => d.valor != null && d.valor !== 0);
-      painel.innerHTML = `<h3>${esc(categorias[evento.dataIndex] || evento.name)}</h3><table class="tabela tabela-compacta"><thead><tr><th>Serviço</th><th class="num">Valor</th></tr></thead><tbody>${dados.map((d) => `<tr><td>${esc(d.nome)}</td><td class="num">${fmtBRL(d.valor)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total do mês</td><td class="num">${fmtBRL(dados.reduce((total, d) => total + Number(d.valor), 0))}</td></tr></tfoot></table>`;
+      const totalMes = dados.reduce((total, d) => total + Number(d.valor), 0);
+      painel.innerHTML = `<h3>${esc(categorias[evento.dataIndex] || evento.name)}</h3><table class="tabela tabela-compacta"><thead><tr><th>Serviço</th><th class="num">Valor</th><th class="num">% do mês</th></tr></thead><tbody>${dados.map((d) => `<tr><td>${esc(d.nome)}</td><td class="num">${fmtBRL(d.valor)}</td><td class="num">${fmtPct(totalMes ? Number(d.valor) / totalMes : null)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total do mês</td><td class="num">${fmtBRL(totalMes)}</td><td class="num">${fmtPct(totalMes ? 1 : null)}</td></tr></tfoot></table>`;
       painel.hidden = false;
     });
     limparDetalhe = () => document.removeEventListener('click', fecharDetalhe);
